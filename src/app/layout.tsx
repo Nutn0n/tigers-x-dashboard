@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import ogImage from "./og.jpg";
 import "./globals.css";
+
+/** Absolute URL for social crawlers (Facebook, etc.); must stay publicly reachable. */
+const OPENGRAPH_IMAGE_URL =
+  "https://ishalab.space/wp-content/uploads/2026/04/og-scaled.jpg";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -32,9 +35,7 @@ export const metadata: Metadata = {
     description,
     images: [
       {
-        url: ogImage.src,
-        width: ogImage.width,
-        height: ogImage.height,
+        url: OPENGRAPH_IMAGE_URL,
         alt: title,
         type: "image/jpeg",
       },
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description,
-    images: [ogImage.src],
+    images: [OPENGRAPH_IMAGE_URL],
   },
 };
 
