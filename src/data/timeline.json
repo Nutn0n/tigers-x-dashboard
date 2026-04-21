@@ -1,0 +1,51 @@
+{
+  "mission": {
+    "id": "tigers-x",
+    "name": "Tigers-X",
+    "epoch": "2026-04-20T20:20:20.000Z"
+  },
+  "events": [
+    {
+      "id": "7f3a9c2e1b8d4f6a0e5c7d9b2a4f8e1c",
+      "name": "ISS proximity operations briefing",
+      "type": "iss-event",
+      "start": "2026-04-22T06:00:00.000Z",
+      "end": "2026-04-22T07:30:00.000Z"
+    },
+    {
+      "id": "2c8e5b1d9a7f3e6c0b4d8a2f5e9c1d7b",
+      "name": "COL–MPCC coordination window",
+      "type": "col-mpcc",
+      "start": "2026-04-22T08:15:00.000Z",
+      "end": "2026-04-22T10:00:00.000Z"
+    },
+    {
+      "id": "9d1f4a8e2c6b0d5f3a7e9c1b4d8f2a6e",
+      "name": "Channel 1 uplink / commanding",
+      "type": "chanel-1",
+      "start": "2026-04-22T10:30:00.000Z",
+      "end": "2026-04-22T11:15:00.000Z"
+    },
+    {
+      "id": "4b6e0c3a8f2d7e1b5c9a3f6d0e4b8c2a",
+      "name": "Channel 2 telemetry pass",
+      "type": "chanel-2",
+      "start": "2026-04-22T12:00:00.000Z",
+      "end": "2026-04-22T12:45:00.000Z"
+    },
+    {
+      "id": "1e9c5f7b3a0d8e2c6b4f1a9d5c7e3b0f",
+      "name": "Channel 3 voice / coordination",
+      "type": "chanel-3",
+      "start": "2026-04-22T14:00:00.000Z",
+      "end": "2026-04-22T15:30:00.000Z"
+    },
+    {
+      "id": "6a2d8e4c0b9f1a5d7e3c6b8f0a4d2e9c",
+      "name": "Payload deployment sequence",
+      "type": "operation",
+      "start": "2026-04-22T16:00:00.000Z",
+      "end": "2026-04-22T18:00:00.000Z"
+    }
+  ]
+}

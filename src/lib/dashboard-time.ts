@@ -8,21 +8,30 @@ function pad3(n: number) {
   return String(n).padStart(3, "0");
 }
 
+/** `ddd:hh:mm:ss` from a non-negative whole-second duration. */
+function formatDddHhMmSs(totalSeconds: number) {
+  const days = Math.floor(totalSeconds / 86400);
+  const rem = totalSeconds % 86400;
+  const hours = Math.floor(rem / 3600);
+  const minutes = Math.floor((rem % 3600) / 60);
+  const seconds = rem % 60;
+  return `${pad3(days)}:${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+}
+
 /** Elapsed since 1 Jan 00:00:00 UTC of the current year — `ddd:hh:mm:ss`. */
 export function formatGmtYearElapsed(now: Date) {
   const year = now.getUTCFullYear();
   const startMs = Date.UTC(year, 0, 1, 0, 0, 0, 0);
   let diffMs = now.getTime() - startMs;
   if (diffMs < 0) diffMs = 0;
+  return formatDddHhMmSs(Math.floor(diffMs / 1000));
+}
 
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const rem = totalSeconds % 86400;
-  const hours = Math.floor(rem / 3600);
-  const minutes = Math.floor((rem % 3600) / 60);
-  const seconds = rem % 60;
-
-  return `${pad3(days)}:${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+/** Mission elapsed time since `epochUtcMs` — `ddd:hh:mm:ss` (clamped before epoch). */
+export function formatMissionElapsedTime(now: Date, epochUtcMs: number) {
+  let diffMs = now.getTime() - epochUtcMs;
+  if (diffMs < 0) diffMs = 0;
+  return formatDddHhMmSs(Math.floor(diffMs / 1000));
 }
 
 export function formatTimeZoneClock(now: Date, timeZone: string) {

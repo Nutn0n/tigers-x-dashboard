@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import timelineData from "@/data/timeline.json";
 import {
   DEFAULT_TIMEZONE_SLOTS,
   formatGmtYearElapsed,
+  formatMissionElapsedTime,
   formatTimeZoneClock,
   formatUtcDateDdMmYyyy,
   ianaForTimezoneChoiceId,
@@ -172,14 +174,21 @@ function LocalTimeColumns({
   );
 }
 
-function MetTile() {
+const MISSION_EPOCH_MS = Date.parse(timelineData.mission.epoch);
+
+function MetTile({ now }: { now: Date }) {
+  const met =
+    Number.isFinite(MISSION_EPOCH_MS) && MISSION_EPOCH_MS > 0
+      ? formatMissionElapsedTime(now, MISSION_EPOCH_MS)
+      : "—:—:—:—";
+
   return (
     <div className={tile(MET_TILE_EXTRA)}>
       <span className={LABEL}>Mission Elapsed Time</span>
-      <span className="w-full text-2xl font-medium tabular-nums text-[#eee]/50 md:text-3xl">
-        —:—:—
+      <span className="w-full text-2xl font-medium tabular-nums md:text-3xl">
+        {met}
       </span>
-      <span className="w-full text-xs text-[#eee]/50 sm:text-sm">TBD</span>
+      <span className="w-full text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
     </div>
   );
 }
@@ -252,7 +261,7 @@ export function DashboardTopBar() {
           timezoneSlots={timezoneSlots}
           setTimezoneSlots={setTimezoneSlots}
         />
-        <MetTile />
+        <MetTile now={now} />
         <AosLosTile aosActive={aosActive} losActive={losActive} />
       </div>
     </header>
