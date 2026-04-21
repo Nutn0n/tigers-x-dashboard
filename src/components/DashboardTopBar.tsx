@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const BOX =
-  "rounded-[10px] border-hairline bg-[#000] text-[#eee] flex flex-col justify-center";
+  "rounded-[10px] border-[1px] border-solid border-[#a9a9a9] bg-[#000] text-[#eee] flex flex-col items-center justify-center text-center";
 
 /** Mission patch & company logo: same frame as boxes, no border (art includes its own edge). */
 const LOGO_FRAME = "rounded-[10px] bg-[#000] relative overflow-hidden";
@@ -64,7 +64,7 @@ function ianaForTimezoneChoiceId(id: string): string {
 }
 
 const SELECT_CLASS =
-  "max-w-full cursor-pointer rounded-[6px] border-hairline bg-[#000] px-1 py-0.5 text-center text-xs font-medium uppercase tracking-wider text-[#eee] sm:text-sm";
+  "max-w-full cursor-pointer rounded-[6px] border-0 bg-[#000] px-1 py-0.5 text-center text-xs font-medium uppercase tracking-wider text-[#eee] sm:text-sm";
 
 /** Current UTC calendar date as dd/mm/yyyy. */
 function formatUtcDateDdMmYyyy(now: Date) {
@@ -124,7 +124,7 @@ export function DashboardTopBar() {
             src="/patch.png"
             alt="Mission patch"
             fill
-            className="object-contain px-2"
+            className="object-contain object-left px-2"
             sizes="(max-width: 768px) 22vw, 120px"
             priority
           />
@@ -139,29 +139,33 @@ export function DashboardTopBar() {
             src="/logo.png"
             alt="Company logo"
             fill
-            className="object-contain px-2"
+            className="object-contain object-left px-2"
             sizes="(max-width: 768px) 23vw, 180px"
             priority
           />
         </div>
 
         {/* 3. GMT: UTC date (dd/mm/yyyy) + year elapsed since 1 Jan UTC */}
-        <div className={`${BOX} ${TILE_MY} min-w-[10.5rem] flex-1 px-3`}>
-          <span className="flex flex-wrap items-baseline gap-x-2 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
+        <div
+          className={`${BOX} ${TILE_MY} w-[11.5rem] max-w-[11.5rem] shrink-0 px-2 md:w-[12rem] md:max-w-[12rem]`}
+        >
+          <span className="flex w-full flex-wrap items-baseline justify-center gap-x-2 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
             <span>GMT</span>
-            <span className="font-medium tabular-nums tracking-normal text-[#eee]">
+            <span className="text-sm font-medium tabular-nums tracking-normal text-[#eee] md:text-base">
               {gmtDateDdMmYyyy}
             </span>
           </span>
-          <span className="text-xl font-medium tabular-nums tracking-tight md:text-2xl">
+          <span className="w-full text-2xl font-medium tabular-nums tracking-tight md:text-3xl">
             {gmtElapsed}
           </span>
-          <span className="text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
+          <span className="w-full text-xs text-[#eee]/60 sm:text-sm">
+            ddd:hh:mm:ss
+          </span>
         </div>
 
         {/* 4. Local times — three columns; each `<select>` picks city / IANA zone */}
-        <div className={`${BOX} ${TILE_MY} min-w-[20rem] flex-1 px-3 md:min-w-[24rem]`}>
-          <div className="grid grid-cols-3 gap-x-2 text-center sm:gap-x-3">
+        <div className={`${BOX} ${TILE_MY} min-w-0 flex-1 px-3 md:min-w-[22rem]`}>
+          <div className="grid w-full grid-cols-3 justify-items-center gap-x-2 text-center sm:gap-x-3">
             {([0, 1, 2] as const).map((slot) => {
               const choiceId = timezoneSlotIds[slot];
               const iana = ianaForTimezoneChoiceId(choiceId);
@@ -197,7 +201,7 @@ export function DashboardTopBar() {
                       </option>
                     ))}
                   </select>
-                  <span className="text-lg font-medium tabular-nums md:text-xl">
+                  <span className="text-xl font-medium tabular-nums md:text-2xl">
                     {localTime}
                   </span>
                 </div>
@@ -208,33 +212,33 @@ export function DashboardTopBar() {
 
         {/* 5. Mission Elapsed Time (TBD) */}
         <div className={`${BOX} ${TILE_MY} min-w-[9rem] flex-1 px-3`}>
-          <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
+          <span className="w-full text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
             Mission Elapsed Time
           </span>
-          <span className="text-xl font-medium tabular-nums text-[#eee]/50 md:text-2xl">
+          <span className="w-full text-2xl font-medium tabular-nums text-[#eee]/50 md:text-3xl">
             —:—:—
           </span>
-          <span className="text-xs text-[#eee]/50 sm:text-sm">TBD</span>
+          <span className="w-full text-xs text-[#eee]/50 sm:text-sm">TBD</span>
         </div>
 
         {/* 6. AOS / LOS */}
         <div className={`${BOX} ${TILE_MY} min-w-[12rem] flex-1 px-3`}>
-          <div className="flex flex-wrap items-baseline gap-x-4">
-            <div>
-              <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
+          <div className="flex w-full flex-wrap items-baseline justify-center gap-x-4">
+            <div className="text-center">
+              <span className="flex items-center justify-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 AOS
                 <StatusDot color={aosDotColor} label={aosDotLabel} />
               </span>
-              <p className="m-0 text-xl font-medium tabular-nums md:text-2xl">
+              <p className="m-0 text-2xl font-medium tabular-nums md:text-3xl">
                 +00:00:00
               </p>
             </div>
-            <div>
-              <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
+            <div className="text-center">
+              <span className="flex items-center justify-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 LOS
                 <StatusDot color={losDotColor} label={losDotLabel} />
               </span>
-              <p className="m-0 text-xl font-medium tabular-nums md:text-2xl">
+              <p className="m-0 text-2xl font-medium tabular-nums md:text-3xl">
                 00:00:000
               </p>
             </div>
