@@ -47,6 +47,33 @@ function formatTimeZone(now: Date, timeZone: string) {
   }).format(now);
 }
 
+/** Dropdown choices: unique `id` per row (Houston vs Huntsville share `America/Chicago`). */
+const TIMEZONE_OPTIONS = [
+  { id: "bangkok", label: "Bangkok", iana: "Asia/Bangkok" },
+  { id: "brussel", label: "Brussel", iana: "Europe/Brussels" },
+  { id: "houston", label: "Houston", iana: "America/Chicago" },
+  { id: "moscow", label: "Moscow", iana: "Europe/Moscow" },
+  { id: "huntsville", label: "Huntsville", iana: "America/Chicago" },
+  { id: "tsukuba", label: "Tsukuba", iana: "Asia/Tokyo" },
+  { id: "munich", label: "Munich", iana: "Europe/Berlin" },
+] as const;
+
+function ianaForTimezoneChoiceId(id: string): string {
+  const found = TIMEZONE_OPTIONS.find((o) => o.id === id);
+  return found?.iana ?? "UTC";
+}
+
+const SELECT_CLASS =
+  "max-w-full cursor-pointer rounded-[6px] border-hairline bg-[#000] px-1 py-0.5 text-center text-xs font-medium uppercase tracking-wider text-[#eee] sm:text-sm";
+
+/** Current UTC calendar date as dd/mm/yyyy. */
+function formatUtcDateDdMmYyyy(now: Date) {
+  const d = pad2(now.getUTCDate());
+  const m = pad2(now.getUTCMonth() + 1);
+  const y = String(now.getUTCFullYear()).padStart(4, "0");
+  return `${d}/${m}/${y}`;
+}
+
 const COLOR_AOS = "#1DB100";
 const COLOR_LOS = "#EE220D";
 const COLOR_UNKNOWN = "#A9A9A9";
@@ -64,6 +91,9 @@ function StatusDot({ color, label }: { color: string; label: string }) {
 
 export function DashboardTopBar() {
   const [now, setNow] = useState(() => new Date());
+  const [timezoneSlotIds, setTimezoneSlotIds] = useState<
+    [string, string, string]
+  >(["bangkok", "brussel", "houston"]);
 
   /** Wire to telemetry: true when in AOS / LOS respectively; both false = unknown (gray dots). */
   const aosActive = false;
@@ -80,9 +110,7 @@ export function DashboardTopBar() {
   }, []);
 
   const gmtElapsed = formatGmtYearElapsed(now);
-  const bangkok = formatTimeZone(now, "Asia/Bangkok");
-  const brussels = formatTimeZone(now, "Europe/Brussels");
-  const houston = formatTimeZone(now, "America/Chicago");
+  const gmtDateDdMmYyyy = formatUtcDateDdMmYyyy(now);
 
   return (
     <header className="w-full">
@@ -117,10 +145,13 @@ export function DashboardTopBar() {
           />
         </div>
 
-        {/* 3. GMT elapsed from Jan 1 (year) */}
+        {/* 3. GMT: UTC date (dd/mm/yyyy) + year elapsed since 1 Jan UTC */}
         <div className={`${BOX} ${TILE_MY} min-w-[10.5rem] flex-1 px-3`}>
-          <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
-            GMT (from Jan 1)
+          <span className="flex flex-wrap items-baseline gap-x-2 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
+            <span>GMT</span>
+            <span className="font-medium tabular-nums tracking-normal text-[#eee]">
+              {gmtDateDdMmYyyy}
+            </span>
           </span>
           <span className="text-xl font-medium tabular-nums tracking-tight md:text-2xl">
             {gmtElapsed}
@@ -128,33 +159,50 @@ export function DashboardTopBar() {
           <span className="text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
         </div>
 
-        {/* 4. Bangkok, Brussel, Houston — one box, names above times on one line */}
-        <div className={`${BOX} ${TILE_MY} min-w-[18rem] flex-1 px-3`}>
-          <div className="grid grid-cols-3 gap-x-3 text-center sm:gap-x-4">
-            <div className="flex min-w-0 flex-col items-center">
-              <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
-                Bangkok
-              </span>
-              <span className="text-lg font-medium tabular-nums md:text-xl">
-                {bangkok}
-              </span>
-            </div>
-            <div className="flex min-w-0 flex-col items-center">
-              <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
-                Brussel
-              </span>
-              <span className="text-lg font-medium tabular-nums md:text-xl">
-                {brussels}
-              </span>
-            </div>
-            <div className="flex min-w-0 flex-col items-center">
-              <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
-                Houston
-              </span>
-              <span className="text-lg font-medium tabular-nums md:text-xl">
-                {houston}
-              </span>
-            </div>
+        {/* 4. Local times — three columns; each `<select>` picks city / IANA zone */}
+        <div className={`${BOX} ${TILE_MY} min-w-[20rem] flex-1 px-3 md:min-w-[24rem]`}>
+          <div className="grid grid-cols-3 gap-x-2 text-center sm:gap-x-3">
+            {([0, 1, 2] as const).map((slot) => {
+              const choiceId = timezoneSlotIds[slot];
+              const iana = ianaForTimezoneChoiceId(choiceId);
+              const localTime = formatTimeZone(now, iana);
+              return (
+                <div
+                  key={slot}
+                  className="flex min-w-0 flex-col items-center gap-0.5"
+                >
+                  <label className="sr-only" htmlFor={`tz-slot-${slot}`}>
+                    Time zone column {slot + 1}
+                  </label>
+                  <select
+                    id={`tz-slot-${slot}`}
+                    className={SELECT_CLASS}
+                    value={choiceId}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setTimezoneSlotIds((prev) => {
+                        const next: [string, string, string] = [...prev] as [
+                          string,
+                          string,
+                          string,
+                        ];
+                        next[slot] = value;
+                        return next;
+                      });
+                    }}
+                  >
+                    {TIMEZONE_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-lg font-medium tabular-nums md:text-xl">
+                    {localTime}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
