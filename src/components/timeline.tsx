@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FullscreenPanel } from "@/components/FullscreenPanel";
 import timelineData from "@/data/timeline.json";
 import { DASHBOARD_PANEL_TITLE_CLASS } from "@/lib/dashboard-panel-styles";
@@ -21,21 +24,22 @@ type TimelineEvent = {
   end: string;
 };
 
-const PX_PER_HOUR = 72;
+const BASE_PX_PER_HOUR = 72;
 const TICK_STEP_HOURS = 6;
-/** Minimum horizon (hours past epoch); widened if events extend further. */
 const MIN_TIMELINE_SPAN_HOURS = 96;
 const HOURS_PAD_AFTER_LAST_EVENT = 8;
 
+const ZOOM_MIN = 0.35;
+const ZOOM_MAX = 10;
+const ZOOM_STEP = 1.12;
+
 const EPOCH_MS = Date.parse(timelineData.mission.epoch);
 const MS_PER_HOUR = 3600 * 1000;
-const PX_PER_MS = PX_PER_HOUR / MS_PER_HOUR;
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
 
-/** Elapsed from epoch to `tMs`, formatted as `+ddd:hh:mm` (mission-style offset). */
 function formatOffsetFromEpoch(epochMs: number, tMs: number) {
   let diffSec = Math.floor((tMs - epochMs) / 1000);
   if (diffSec < 0) diffSec = 0;
@@ -50,9 +54,18 @@ function hoursSinceEpoch(epochMs: number, tMs: number) {
   return (tMs - epochMs) / MS_PER_HOUR;
 }
 
-function barLeftWidthPx(epochMs: number, startMs: number, endMs: number) {
-  const left = (startMs - epochMs) * PX_PER_MS;
-  const width = (endMs - startMs) * PX_PER_MS;
+function pxPerMsFromZoom(zoom: number) {
+  return (BASE_PX_PER_HOUR * zoom) / MS_PER_HOUR;
+}
+
+function barLeftWidthPx(
+  epochMs: number,
+  startMs: number,
+  endMs: number,
+  pxPerMs: number,
+) {
+  const left = (startMs - epochMs) * pxPerMs;
+  const width = (endMs - startMs) * pxPerMs;
   return { left, width: Math.max(width, 6) };
 }
 
@@ -89,12 +102,104 @@ function computeSpanHours(epochMs: number, events: TimelineEvent[]) {
   );
 }
 
+function clampZoom(z: number) {
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+}
+
 export function Timeline() {
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const wheelProbeRef = useRef<{
+    focalMs: number;
+    z0: number;
+    z1: number;
+  } | null>(null);
+
   const epochOk = Number.isFinite(EPOCH_MS) && EPOCH_MS > 0;
   const events = timelineData.events as TimelineEvent[];
+  const spanHours = epochOk
+    ? computeSpanHours(EPOCH_MS, events)
+    : MIN_TIMELINE_SPAN_HOURS;
 
-  const spanHours = epochOk ? computeSpanHours(EPOCH_MS, events) : MIN_TIMELINE_SPAN_HOURS;
-  const totalPx = spanHours * PX_PER_HOUR;
+  const pxPerHour = BASE_PX_PER_HOUR * zoom;
+  const pxPerMs = pxPerMsFromZoom(zoom);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const panHorizontal =
+        e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      if (panHorizontal) {
+        return;
+      }
+
+      e.preventDefault();
+      const z0 = zoomRef.current;
+      const factor = e.deltaY > 0 ? 1 / ZOOM_STEP : ZOOM_STEP;
+      const z1 = clampZoom(z0 * factor);
+      if (z1 === z0) {
+        wheelProbeRef.current = null;
+        return;
+      }
+      const pxPerMs0 = pxPerMsFromZoom(z0);
+      const focalMs =
+        EPOCH_MS +
+        (el.scrollLeft + el.clientWidth / 2) / pxPerMs0;
+
+      wheelProbeRef.current = { focalMs, z0, z1 };
+      setZoom(z1);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const probe = wheelProbeRef.current;
+
+    if (el && probe && Math.abs(probe.z1 - zoom) <= 1e-6) {
+      const pxPerMs1 = pxPerMsFromZoom(zoom);
+      const scrollBefore = el.scrollLeft;
+      const contentWidthPx = spanHours * BASE_PX_PER_HOUR * zoom;
+      const maxScrollLeft = Math.max(0, contentWidthPx - el.clientWidth);
+      const nextScrollLeft =
+        (probe.focalMs - EPOCH_MS) * pxPerMs1 - el.clientWidth / 2;
+      el.scrollLeft = Math.max(
+        0,
+        Math.min(nextScrollLeft, maxScrollLeft),
+      );
+
+      const focalAfter =
+        EPOCH_MS + (el.scrollLeft + el.clientWidth / 2) / pxPerMs1;
+
+      // #region agent log
+      debugLog(
+        {
+          phase: "layout-post",
+          hypothesisId: "H1",
+          scrollLeft: scrollBefore,
+          scrollLeftAfter: el.scrollLeft,
+          clientWidth: el.clientWidth,
+          scrollWidth: el.scrollWidth,
+          contentWidthPx,
+          maxScrollLeft,
+          zoom,
+          focalMsAtViewportCenter: focalAfter,
+          focalDriftMs: focalAfter - probe.focalMs,
+        },
+        "post-fix",
+      );
+      // #endregion
+
+      wheelProbeRef.current = null;
+    }
+
+    zoomRef.current = zoom;
+  }, [zoom, spanHours]);
+
+  const totalPx = spanHours * pxPerHour;
   const tickCount = Math.floor(spanHours / TICK_STEP_HOURS) + 1;
 
   const eventsByRow: Record<RowType, TimelineEvent[]> = {
@@ -144,7 +249,14 @@ export function Timeline() {
                 ))}
               </div>
 
-              <div className="min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden rounded-sm border border-solid border-[#eee]/20">
+              <div
+                ref={scrollRef}
+                className="min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden rounded-sm border border-solid border-[#eee]/20"
+              >
+                <span className="sr-only">
+                  Vertical scroll wheel zooms the timeline. Shift-scroll or horizontal
+                  scroll pans sideways.
+                </span>
                 <div
                   className="flex h-full min-h-[220px] flex-col"
                   style={{ width: totalPx, minWidth: totalPx }}
@@ -156,7 +268,7 @@ export function Timeline() {
                     {Array.from({ length: tickCount }, (_, i) => {
                       const hour = i * TICK_STEP_HOURS;
                       if (hour > spanHours) return null;
-                      const left = hour * PX_PER_HOUR;
+                      const left = hour * pxPerHour;
                       const tickMs = EPOCH_MS + hour * MS_PER_HOUR;
                       return (
                         <div
@@ -192,6 +304,7 @@ export function Timeline() {
                             EPOCH_MS,
                             startMs,
                             endMs,
+                            pxPerMs,
                           );
                           return (
                             <div
