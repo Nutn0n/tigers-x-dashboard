@@ -35,10 +35,13 @@ const DOT_LOS = "#EE220D";
 const DOT_UNKNOWN = "#A9A9A9";
 
 const GMT_TILE_EXTRA =
-  "w-[11.5rem] max-w-[11.5rem] shrink-0 px-2 md:w-[12rem] md:max-w-[12rem]";
-const TZ_TILE_EXTRA = "min-w-0 flex-1 px-3 md:min-w-[22rem]";
-const MET_TILE_EXTRA = "min-w-[9rem] flex-1 px-3";
-const AOS_LOS_TILE_EXTRA = "min-w-[12rem] flex-1 px-3";
+  "w-[11.5rem] max-w-[11.5rem] shrink-0 px-2 max-md:w-full max-md:max-w-none md:w-[12rem] md:max-w-[12rem]";
+const TZ_TILE_EXTRA =
+  "min-w-0 w-full max-md:flex-none px-2 sm:px-3 md:w-auto md:flex-1 md:min-w-[22rem]";
+const MET_TILE_EXTRA =
+  "min-w-[9rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-0";
+const AOS_LOS_TILE_EXTRA =
+  "min-w-[12rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-0";
 
 const TIMEZONE_SLOT_INDICES = [0, 1, 2] as const;
 
@@ -143,7 +146,7 @@ function LocalTimeColumns({
 }) {
   return (
     <div className={tile(TZ_TILE_EXTRA)}>
-      <div className="grid w-full grid-cols-3 justify-items-center gap-x-2 text-center sm:gap-x-3">
+      <div className="grid min-w-0 w-full grid-cols-3 justify-items-center gap-x-1 text-center sm:gap-x-2 md:gap-x-3">
         {TIMEZONE_SLOT_INDICES.map((slot) => {
           const choiceId = timezoneSlots[slot];
           const iana = ianaForTimezoneChoiceId(choiceId);
@@ -174,7 +177,7 @@ function LocalTimeColumns({
                   </option>
                 ))}
               </select>
-              <span className="text-xl font-medium tabular-nums md:text-2xl">
+              <span className="text-base font-medium tabular-nums sm:text-xl md:text-2xl">
                 {localTime}
               </span>
             </div>
@@ -240,22 +243,24 @@ export function DashboardTopBar() {
 
   return (
     <header className="w-full">
-      <div className="flex flex-wrap items-stretch gap-3 md:gap-4">
-        <BrandedImageSlot
-          frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-square w-[min(22vw,7.5rem)] shrink-0`}
-          src="/patch.png"
-          alt="Mission patch"
-          sizes="(max-width: 768px) 22vw, 120px"
-          aria-label="Mission patch"
-        />
+      <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-stretch md:gap-4">
+        <div className="flex w-full flex-shrink-0 flex-row items-center justify-center gap-3 md:contents">
+          <BrandedImageSlot
+            frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-square w-[min(22vw,7.5rem)] shrink-0`}
+            src="/patch.png"
+            alt="Mission patch"
+            sizes="(max-width: 768px) 22vw, 120px"
+            aria-label="Mission patch"
+          />
 
-        <BrandedImageSlot
-          frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-[3/1] h-[min(11vw,60px)] shrink-0 self-center`}
-          src="/logo.png"
-          alt="Company logo"
-          sizes="(max-width: 768px) 23vw, 180px"
-          aria-label="Company logo"
-        />
+          <BrandedImageSlot
+            frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-[3/1] h-[min(11vw,60px)] shrink-0 self-center`}
+            src="/logo.png"
+            alt="Company logo"
+            sizes="(max-width: 768px) 23vw, 180px"
+            aria-label="Company logo"
+          />
+        </div>
 
         <GmtTile now={now} />
         <LocalTimeColumns

@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { DASHBOARD_PANEL_BOX_MIN_HEIGHT_CLASS } from "@/lib/dashboard-panel-styles";
 
 function IconExpand({ className }: { className?: string }) {
   return (
@@ -56,7 +57,7 @@ type FullscreenPanelProps = {
 export function FullscreenPanel({
   children,
   className = "",
-  collapseMinHeightClass = "min-h-[500px]",
+  collapseMinHeightClass = DASHBOARD_PANEL_BOX_MIN_HEIGHT_CLASS,
 }: FullscreenPanelProps) {
   const [expanded, setExpanded] = useState(false);
 

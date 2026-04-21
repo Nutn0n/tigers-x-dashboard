@@ -28,10 +28,7 @@ export function TitledDashboardPanel({
 }: TitledDashboardPanelProps) {
   const titleId = `${panelId}-panel-title`;
   return (
-    <FullscreenPanel
-      className={VARIANT_ROOT_CLASS[variant]}
-      collapseMinHeightClass="min-h-0"
-    >
+    <FullscreenPanel className={VARIANT_ROOT_CLASS[variant]}>
       <section
         className={DASHBOARD_PANEL_SECTION_CLASS}
         aria-labelledby={titleId}

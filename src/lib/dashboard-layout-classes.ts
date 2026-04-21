@@ -8,18 +8,18 @@ export const DASHBOARD_CONTENT_MAX =
 
 /** ISS (¼) + Timeline (¾). */
 export const DASHBOARD_TOP_GRID =
-  "mt-6 grid min-w-0 grid-cols-[1fr_3fr] gap-4 md:mt-8 md:gap-6";
+  "mt-6 grid min-w-0 grid-cols-1 gap-4 md:mt-8 md:grid-cols-[1fr_3fr] md:gap-6";
 
 export const DASHBOARD_TOP_GRID_CELL = "min-h-0 min-w-0";
 
 /** Microfludic strip + six tiles (two 1fr rows × three columns). */
 export const DASHBOARD_QUARTER_OUTER =
-  "mt-6 flex min-h-[min(520px,70vh)] min-w-0 items-stretch gap-4 md:mt-8 md:gap-6";
+  "mt-6 flex min-h-[min(520px,70vh)] min-w-0 flex-col items-stretch gap-4 md:mt-8 md:flex-row md:gap-6";
 
 export const DASHBOARD_MICRO_COLUMN =
-  "flex min-h-0 w-1/4 shrink-0 flex-col self-stretch";
+  "flex min-h-0 w-full shrink-0 flex-col self-stretch md:w-1/4";
 
 export const DASHBOARD_QUARTER_INNER_GRID =
-  "grid min-h-0 min-w-0 flex-1 grid-cols-3 grid-rows-[1fr_1fr] gap-4 md:gap-6";
+  "grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-[1fr_1fr] md:gap-6";
 
 export const DASHBOARD_QUARTER_CELL = "flex h-full min-h-0 min-w-0";
