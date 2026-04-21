@@ -161,7 +161,6 @@ export function Timeline() {
 
     if (el && probe && Math.abs(probe.z1 - zoom) <= 1e-6) {
       const pxPerMs1 = pxPerMsFromZoom(zoom);
-      const scrollBefore = el.scrollLeft;
       const contentWidthPx = spanHours * BASE_PX_PER_HOUR * zoom;
       const maxScrollLeft = Math.max(0, contentWidthPx - el.clientWidth);
       const nextScrollLeft =
@@ -170,28 +169,6 @@ export function Timeline() {
         0,
         Math.min(nextScrollLeft, maxScrollLeft),
       );
-
-      const focalAfter =
-        EPOCH_MS + (el.scrollLeft + el.clientWidth / 2) / pxPerMs1;
-
-      // #region agent log
-      debugLog(
-        {
-          phase: "layout-post",
-          hypothesisId: "H1",
-          scrollLeft: scrollBefore,
-          scrollLeftAfter: el.scrollLeft,
-          clientWidth: el.clientWidth,
-          scrollWidth: el.scrollWidth,
-          contentWidthPx,
-          maxScrollLeft,
-          zoom,
-          focalMsAtViewportCenter: focalAfter,
-          focalDriftMs: focalAfter - probe.focalMs,
-        },
-        "post-fix",
-      );
-      // #endregion
 
       wheelProbeRef.current = null;
     }
