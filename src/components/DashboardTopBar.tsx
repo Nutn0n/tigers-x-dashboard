@@ -54,7 +54,7 @@ const COLOR_UNKNOWN = "#A9A9A9";
 function StatusDot({ color, label }: { color: string; label: string }) {
   return (
     <span
-      className="inline-block size-2 shrink-0 rounded-full"
+      className="inline-block size-2.5 shrink-0 rounded-full sm:size-3"
       style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
       title={label}
       aria-label={label}
@@ -85,7 +85,7 @@ export function DashboardTopBar() {
   const houston = formatTimeZone(now, "America/Chicago");
 
   return (
-    <header className="w-full px-3 md:px-4">
+    <header className="w-full">
       <div className="flex flex-wrap items-stretch gap-3 md:gap-4">
         {/* 1. Mission patch — 1:1 (`public/patch.png`) */}
         <div
@@ -119,39 +119,39 @@ export function DashboardTopBar() {
 
         {/* 3. GMT elapsed from Jan 1 (year) */}
         <div className={`${BOX} ${TILE_MY} min-w-[10.5rem] flex-1 px-3`}>
-          <span className="text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+          <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
             GMT (from Jan 1)
           </span>
-          <span className="text-lg font-medium tabular-nums tracking-tight md:text-xl">
+          <span className="text-xl font-medium tabular-nums tracking-tight md:text-2xl">
             {gmtElapsed}
           </span>
-          <span className="text-[0.6rem] text-[#eee]/60">ddd:hh:mm:ss</span>
+          <span className="text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
         </div>
 
         {/* 4. Bangkok, Brussel, Houston — one box, names above times on one line */}
-        <div className={`${BOX} ${TILE_MY} min-w-[16rem] flex-1 px-3`}>
+        <div className={`${BOX} ${TILE_MY} min-w-[18rem] flex-1 px-3`}>
           <div className="grid grid-cols-3 gap-x-3 text-center sm:gap-x-4">
             <div className="flex min-w-0 flex-col items-center">
-              <span className="text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+              <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 Bangkok
               </span>
-              <span className="text-base font-medium tabular-nums md:text-lg">
+              <span className="text-lg font-medium tabular-nums md:text-xl">
                 {bangkok}
               </span>
             </div>
             <div className="flex min-w-0 flex-col items-center">
-              <span className="text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+              <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 Brussel
               </span>
-              <span className="text-base font-medium tabular-nums md:text-lg">
+              <span className="text-lg font-medium tabular-nums md:text-xl">
                 {brussels}
               </span>
             </div>
             <div className="flex min-w-0 flex-col items-center">
-              <span className="text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+              <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 Houston
               </span>
-              <span className="text-base font-medium tabular-nums md:text-lg">
+              <span className="text-lg font-medium tabular-nums md:text-xl">
                 {houston}
               </span>
             </div>
@@ -160,33 +160,33 @@ export function DashboardTopBar() {
 
         {/* 5. Mission Elapsed Time (TBD) */}
         <div className={`${BOX} ${TILE_MY} min-w-[9rem] flex-1 px-3`}>
-          <span className="text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+          <span className="text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
             Mission Elapsed Time
           </span>
-          <span className="text-lg font-medium tabular-nums text-[#eee]/50 md:text-xl">
+          <span className="text-xl font-medium tabular-nums text-[#eee]/50 md:text-2xl">
             —:—:—
           </span>
-          <span className="text-[0.6rem] text-[#eee]/50">TBD</span>
+          <span className="text-xs text-[#eee]/50 sm:text-sm">TBD</span>
         </div>
 
         {/* 6. AOS / LOS */}
         <div className={`${BOX} ${TILE_MY} min-w-[12rem] flex-1 px-3`}>
           <div className="flex flex-wrap items-baseline gap-x-4">
             <div>
-              <span className="flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+              <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 AOS
                 <StatusDot color={aosDotColor} label={aosDotLabel} />
               </span>
-              <p className="m-0 text-lg font-medium tabular-nums md:text-xl">
+              <p className="m-0 text-xl font-medium tabular-nums md:text-2xl">
                 +00:00:00
               </p>
             </div>
             <div>
-              <span className="flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-wider text-[#eee]/80">
+              <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm">
                 LOS
                 <StatusDot color={losDotColor} label={losDotLabel} />
               </span>
-              <p className="m-0 text-lg font-medium tabular-nums md:text-xl">
+              <p className="m-0 text-xl font-medium tabular-nums md:text-2xl">
                 00:00:000
               </p>
             </div>
