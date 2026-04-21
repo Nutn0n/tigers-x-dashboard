@@ -1,6 +1,6 @@
-# ISS Telemetry Dashboard Starter
+# TIGERS-X Dashboard (`tigers-x-dashboard`)
 
-This is a Next.js starter website for an ISS experiment telemetry dashboard.
+This is a Next.js app for the TIGERS-X mission control dashboard.
 It currently uses only public APIs and is set up to be extended into a full
 mission-control UI.
 
