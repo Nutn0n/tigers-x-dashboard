@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   description,
   openGraph: {
     type: "website",
+    locale: "en_US",
+    siteName: "TIGERS-X Mission Control",
+    url: "/",
     title,
     description,
     images: [
@@ -33,6 +36,7 @@ export const metadata: Metadata = {
         width: ogImage.width,
         height: ogImage.height,
         alt: title,
+        type: "image/jpeg",
       },
     ],
   },
