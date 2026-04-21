@@ -2,7 +2,7 @@
 
 Web dashboard for **TIGERS-X** — *Thailand Innovative G-force varied Emulsification Research for Space Exploration* — a Thai-built experiment bound for the International Space Station (ISS).
 
-This repository is a **Next.js** application: a mission-oriented control-room style UI. Today it focuses on **context and public space data** (ISS position, crew, passes, launches). **Deeper mission features** — live payload telemetry, operator workflows, alerts, and authenticated mission control — are **planned and will ship in later iterations**.
+This repository is a **Next.js** application: a mission-oriented control-room style UI made of **layout and placeholder panels** (no live HTTP calls to third-party or mission backends yet). **Data and integrations** — public context feeds, payload telemetry, operator workflows, alerts, and authenticated mission control — are **planned and will ship in later iterations**.
 
 ---
 
@@ -44,17 +44,11 @@ The program also emphasizes **documentation and knowledge transfer** so future T
 
 ## About this dashboard (software)
 
-This app is a **mission dashboard shell**: it presents **mission framing** and **public space environment** data useful for demos, outreach, and early UI work. It does **not** yet connect to **classified or payload-specific** TIGERS-X channels; those integrations, charts, maps, and operator tools will arrive **in future releases**.
-
-**Current sections (public APIs only):**
-
-- ISS position, altitude, and velocity
-- People in space and crew / spacecraft
-- Example ISS passes (Houston)
-- Upcoming launches (public launch library)
+This app is a **mission dashboard shell**: it presents **mission framing** and a **static multi-panel layout** (ISS header area, timeline, trajectory, telemetry, telecommand, payload viewer, activity widgets, and related tiles) for demos, outreach, and early UI work. It does **not** yet call **external public APIs** or **payload-specific** TIGERS-X backends.
 
 **Coming later (roadmap):**
 
+- **Third-party context data** where useful (for example ISS position, people-in-space summaries, or launch calendars), wired through explicit API routes or server components
 - Live or archived **payload telemetry** and experiment status
 - **Charts** and ground track / map views
 - **Internal API routes** with typed contracts and safer data handling
@@ -89,15 +83,7 @@ This is a standard **Next.js** app. Typical options:
 2. **Self-hosted Node**: run `npm run build` then `npm start` behind a reverse proxy (e.g. nginx) with HTTPS and your domain.
 3. **Container**: wrap `npm run build` + `npm start` in a multi-stage Dockerfile if you deploy to Kubernetes or another container platform.
 
-Set **environment variables** only when you add features that need them (e.g. API keys or backend URLs); the current public-data demo does not require a `.env` for basic operation.
-
----
-
-## Public APIs used today
-
-- ISS position and velocity — [Where The ISS At?](https://wheretheiss.at/w/developer)
-- People in space and ISS pass predictions — [Open Notify](http://open-notify.org/Open-Notify-API/)
-- Upcoming launches — [The Space Devs Launch Library 2](https://thespacedevs.com/llapi)
+Set **environment variables** only when you add features that need them (for example API keys or backend URLs). The current static UI does not require a `.env` for basic operation.
 
 ---
 
