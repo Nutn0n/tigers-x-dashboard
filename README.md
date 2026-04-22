@@ -1,90 +1,153 @@
-# TIGERS-X Mission Dashboard
+# TIGERS-X Mission Operations Dashboard
 
-Web dashboard for **TIGERS-X** — *Thailand Innovative G-force varied Emulsification Research for Space Exploration* — a Thai-built experiment bound for the International Space Station (ISS).
+This is a web-based dashboard designed to display telemetry, telecommands, and status updates to support mission operations for the TIGERS-X payload in the ICE Cubes Facility on the Columbus Module aboard the International Space Station.
 
-This repository is a **Next.js** application: a mission-oriented control-room style UI made of **layout and placeholder panels** (no live HTTP calls to third-party or mission backends yet). **Data and integrations** — public context feeds, payload telemetry, operator workflows, alerts, and authenticated mission control — are **planned and will ship in later iterations**.
+**Deployed at:** https://dashboard.tigers-x.ishalab.space
 
----
+## Features
 
-## About the mission
+1. Display operation timeline alongside ISS mission operations  
+2. Display Mission Time, Ground Station Time, and Local Time  
+3. Display payload status and telemetry in real time  
+4. Display payload telecommand uplinks to the station in real time  
 
-**TIGERS-X** is an active payload with data connectivity, launching **May 2026** on **SpaceX Dragon CRS-34** to the **ISS Columbus** module. The mission advances **medical research for Earth and space**, centered on **Total Parenteral Nutrition (TPN)** in **low Earth orbit**.
+## Objective
 
-TPN delivers nutrients (lipids, proteins, carbohydrates) intravenously when the digestive system cannot be used. As an **emulsion**, oil- and water-based phases separate quickly under **Earth gravity**, which limits how we study long-term stability. **Microgravity** lets researchers study fluid dynamics and interfacial behavior without that dominant gravitational settling — supporting work on how complex formulations can be mixed **reliably without gravity or constant human intervention**, with implications for resilient, decentralized manufacturing closer to patients.
+The goal of this dashboard is to support mission operations in coordination with ESA, the ICE Cubes YAMS system, and mission planning software.
 
-The payload is **designed and built in Thailand** (system design, hardware integration, test, and operations), using **local resources and facilities**, and represents **Thailand’s first active ISS payload** with **near–real-time telemetry and telecommand** to **mission control in Bangkok** (via the ISS onboard network, ground services, and secure links). It is a **compact lab-on-chip style platform** with **data connectivity** for science and operations.
+## User Manual
 
-### Payload snapshot
+The website utilizes data from three sources:
 
-| Item | Detail |
-|------|--------|
-| **Dimensions** | 100 × 100 × 200 mm |
-| **Material** | Anodized aluminum |
-| **Launch mass** | 2.5 kg |
-| **On-board computer** | Orange Pi |
-| **Power (peak)** | 18 W |
-| **Data** | Telemetry and telecommands |
+1. `timeline.json` for station and mission operation planning  
+2. Public API for telemetry and telecommand status  
+3. International Space Station public API  
 
-### Mission timeline (summary)
+## `timeline.json` Format Example
 
-| Phase | When | Notes |
-|--------|------|--------|
-| Introduction | 2024 | Initiated following heritage from KEETA / NASA Space Food Challenge participation |
-| Design reviews | 2024 | PDR and CDR passed; payload development aligned to science goals |
-| Zero-G flight test | Nov 2024 | Proof of concept in reduced gravity |
-| Integration & test | Nov 2024 – Feb 2026 | Designed, built, and tested in Thailand |
-| Delivery | Mar 2026 | Delivered and tested in Belgium; handover toward ESA / NASA |
-| Launch & install | May 2026 | CRS-34 from Cape Canaveral; installation in Columbus |
-| Station science | May – Sep 2026 | Operations including experiment video downlink |
-| Return | Late 2026 | Return to Earth with CRS-34 |
+```json
+[
+  {
+    "id": "unique-event-id",
+    "name": "ISS proximity operations briefing",
+    "type": "iss-event",
+    "start": "2026-04-22T06:00:00.000Z",
+    "end": "2026-04-22T07:30:00.000Z"
+  },
+  {
+    "id": "unique-event-id-2",
+    "name": "Payload operation - Day 1",
+    "type": "operation",
+    "start": "2026-04-22T00:00:00.000Z",
+    "end": "2026-04-23T00:00:00.000Z"
+  }
+]
+```
 
-The program also emphasizes **documentation and knowledge transfer** so future Thai space programs build on proven heritage rather than starting from zero.
+## Field Description
 
----
+- id: Unique identifier for each event  
+- name: Event or operation name  
+- type: Event type (e.g., iss-event, operation, col-mpcc)  
+- start: Start time in ISO 8601 format (UTC)  
+- end: End time in ISO 8601 format (UTC)  
 
-## About this dashboard (software)
+## Build And Run
 
-This app is a **mission dashboard shell**: it presents **mission framing** and a **static multi-panel layout** (ISS header area, timeline, trajectory, telemetry, telecommand, payload viewer, activity widgets, and related tiles) for demos, outreach, and early UI work. It does **not** yet call **external public APIs** or **payload-specific** TIGERS-X backends.
-
-**Coming later (roadmap):**
-
-- **Third-party context data** where useful (for example ISS position, people-in-space summaries, or launch calendars), wired through explicit API routes or server components
-- Live or archived **payload telemetry** and experiment status
-- **Charts** and ground track / map views
-- **Internal API routes** with typed contracts and safer data handling
-- **Authentication** and role-based views for operators
-- **Alerts**, thresholds, and anomaly highlighting
-
----
-
-## Run locally
+### Run Locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) (or the port shown in the terminal if 3000 is busy).
+Open http://localhost:3000 (or the port shown in the terminal).
 
-**Production build (local or any Node host):**
+### Production Build
 
 ```bash
 npm run build
 npm start
 ```
 
-Serve on the host’s configured port (often `3000`). Use your platform’s process manager or container orchestration for restarts and scaling.
+Served on the configured port (default: 3000). Use a process manager or container orchestration for reliability.
 
-### Deploying the dashboard
+## Deployment
 
-This is a standard **Next.js** app. Typical options:
+### Vercel (Recommended)
 
-1. **Vercel** (or similar): connect the Git repository, select the Next.js preset, use defaults for build (`npm run build`) and output. No extra config is required for a basic deploy.
-2. **Self-hosted Node**: run `npm run build` then `npm start` behind a reverse proxy (e.g. nginx) with HTTPS and your domain.
-3. **Container**: wrap `npm run build` + `npm start` in a multi-stage Dockerfile if you deploy to Kubernetes or another container platform.
+- Push project to GitHub/GitLab/Bitbucket  
+- Import project into Vercel  
+- Select Next.js preset  
+- Use default build command: npm run build  
+- Deploy  
 
-Set **environment variables** only when you add features that need them (for example API keys or backend URLs). The current static UI does not require a `.env` for basic operation.
+No additional configuration is required for basic usage.
 
----
+### Self-Hosted Node (with Nginx)
 
-*Built with Thai researchers and engineers — TIGERS-X links national capability in space systems to healthcare innovation.*
+Build and start the app:
+
+```bash
+npm run build
+npm start
+```
+
+Configure Nginx as reverse proxy:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Enable HTTPS (e.g. Let's Encrypt)
+
+### Docker (Container Deployment)
+
+```dockerfile
+# Build stage
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN npm install
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=builder /app ./
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+Run container:
+
+```bash
+docker build -t tigersx-dashboard .
+docker run -p 3000:3000 tigersx-dashboard
+```
+
+### Kubernetes / Cloud
+
+Deploy the container image to your cluster. Use:
+
+- Horizontal scaling for traffic  
+- Ingress controller for routing  
+- HTTPS termination  
+
+## Environment Variables
+
+Only required when integrating external services (e.g. API keys, backend endpoints).  
+
+The current implementation does not require a `.env` file for basic operation.
