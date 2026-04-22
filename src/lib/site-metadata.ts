@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 
-export const SITE_TITLE = "TIGERS-X Mission Control Viewer";
+const SITE_TITLE = "TIGERS-X Mission Control Viewer";
 
-export const SITE_DESCRIPTION =
+const SITE_DESCRIPTION =
   "Dashboard for Thailand Innovative G-force varied Emulsification Research for Space Exploration experiments aboard the International Space Station";
 
 /** Absolute URL for social crawlers (Facebook, etc.); must stay publicly reachable. */
-export const OPENGRAPH_IMAGE_URL =
+const OPENGRAPH_IMAGE_URL =
   "https://ishalab.space/wp-content/uploads/2026/04/og-scaled.jpg";
 
-export function getSiteUrl(): string {
+function getSiteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL

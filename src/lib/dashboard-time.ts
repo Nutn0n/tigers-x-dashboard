@@ -8,21 +8,43 @@ function pad3(n: number) {
   return String(n).padStart(3, "0");
 }
 
+/**
+ * Non-negative duration as `hh:mm:ss` (hours may exceed 23; hours use at least
+ * two digits when under 100).
+ */
+export function formatHhMmSsFromDurationMs(durationMs: number) {
+  let sec = Math.floor(Math.max(0, durationMs) / 1000);
+  const h = Math.floor(sec / 3600);
+  sec %= 3600;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(h).padStart(2, "0")}:${pad2(m)}:${pad2(s)}`;
+}
+
+/** `ddd:hh:mm:ss` from a non-negative whole-second duration. */
+function formatDddHhMmSs(totalSeconds: number) {
+  const days = Math.floor(totalSeconds / 86400);
+  const rem = totalSeconds % 86400;
+  const hours = Math.floor(rem / 3600);
+  const minutes = Math.floor((rem % 3600) / 60);
+  const seconds = rem % 60;
+  return `${pad3(days)}:${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+}
+
 /** Elapsed since 1 Jan 00:00:00 UTC of the current year — `ddd:hh:mm:ss`. */
 export function formatGmtYearElapsed(now: Date) {
   const year = now.getUTCFullYear();
   const startMs = Date.UTC(year, 0, 1, 0, 0, 0, 0);
   let diffMs = now.getTime() - startMs;
   if (diffMs < 0) diffMs = 0;
+  return formatDddHhMmSs(Math.floor(diffMs / 1000));
+}
 
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const rem = totalSeconds % 86400;
-  const hours = Math.floor(rem / 3600);
-  const minutes = Math.floor((rem % 3600) / 60);
-  const seconds = rem % 60;
-
-  return `${pad3(days)}:${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+/** Mission elapsed time since `epochUtcMs` — `ddd:hh:mm:ss` (clamped before epoch). */
+export function formatMissionElapsedTime(now: Date, epochUtcMs: number) {
+  let diffMs = now.getTime() - epochUtcMs;
+  if (diffMs < 0) diffMs = 0;
+  return formatDddHhMmSs(Math.floor(diffMs / 1000));
 }
 
 export function formatTimeZoneClock(now: Date, timeZone: string) {
@@ -41,6 +63,21 @@ export function formatUtcDateDdMmYyyy(now: Date) {
   const m = pad2(now.getUTCMonth() + 1);
   const y = String(now.getUTCFullYear()).padStart(4, "0");
   return `${d}/${m}/${y}`;
+}
+
+/** Bangkok local time for an instant: `dd/mm/yy hh:mm:ss` (24h). */
+export function formatBangkokDdMmYyHhMmSs(at: Date) {
+  const s = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(at);
+  return s.replace(", ", " ");
 }
 
 /**
