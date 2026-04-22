@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FullscreenPanel } from "@/components/FullscreenPanel";
 import timelineData from "@/data/timeline.json";
 import { formatBangkokDdMmYyHhMmSs } from "@/lib/dashboard-time";
@@ -33,17 +34,78 @@ const FILLED_BAR_CLASS =
 const OUTLINE_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-white bg-transparent text-left";
 
+type TimelineEventTooltipPayload = {
+  id: string;
+  title: string;
+  startText: string;
+  endText: string;
+  anchor: DOMRect;
+  /** Hide tooltip when zoom changes without relying on effect setState. */
+  capturedZoom: number;
+};
+
+function TimelineEventHoverTooltip({
+  payload,
+}: {
+  payload: TimelineEventTooltipPayload;
+}) {
+  const { anchor, title, startText, endText } = payload;
+  const left = anchor.left + anchor.width / 2;
+  const top = anchor.top - 8;
+  return (
+    <div
+      className="pointer-events-none fixed z-[200] max-w-[min(22rem,calc(100vw-1rem))] rounded-md border border-solid border-[#eee]/25 bg-[#141414] px-2.5 py-2 text-left shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+      style={{
+        left,
+        top,
+        transform: "translate(-50%, -100%)",
+      }}
+      role="tooltip"
+    >
+      <p className="m-0 text-[11px] font-semibold leading-snug text-[#eee] sm:text-xs">
+        {title}
+      </p>
+      <dl className="m-0 mt-1.5 space-y-0.5 text-[10px] leading-snug text-[#eee]/85 sm:text-[11px]">
+        <div className="flex gap-2">
+          <dt className="m-0 shrink-0 text-[#eee]/55">Start</dt>
+          <dd className="m-0 min-w-0 tabular-nums">{startText}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="m-0 shrink-0 text-[#eee]/55">End</dt>
+          <dd className="m-0 min-w-0 tabular-nums">{endText}</dd>
+        </div>
+      </dl>
+      <p className="m-0 mt-1 text-[9px] text-[#eee]/45">Times in GMT+7 (Bangkok)</p>
+    </div>
+  );
+}
+
 function TimelineEventBar({
   rowType,
   ev,
   epochMs,
   pxPerMs,
+  zoom,
+  onHoverChange,
 }: {
   rowType: RowType;
   ev: TimelineEvent;
   epochMs: number;
   pxPerMs: number;
+  zoom: number;
+  onHoverChange?: (payload: TimelineEventTooltipPayload | null) => void;
 }) {
+  const leaveHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHideTimer = () => {
+    if (leaveHideTimerRef.current !== null) {
+      clearTimeout(leaveHideTimerRef.current);
+      leaveHideTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => () => clearHideTimer(), []);
+
   const startMs = Date.parse(ev.start);
   const endMs = Date.parse(ev.end);
   if (
@@ -53,6 +115,8 @@ function TimelineEventBar({
   ) {
     return null;
   }
+  const startText = formatBangkokDdMmYyHhMmSs(new Date(startMs));
+  const endText = formatBangkokDdMmYyHhMmSs(new Date(endMs));
   const { left, width } = barLeftWidthPx(
     epochMs,
     startMs,
@@ -60,6 +124,7 @@ function TimelineEventBar({
     pxPerMs,
   );
   const outline = isOutlineOnlyLane(rowType);
+
   return (
     <div
       className={outline ? OUTLINE_BAR_CLASS : FILLED_BAR_CLASS}
@@ -70,7 +135,25 @@ function TimelineEventBar({
           ? { backgroundColor: "transparent" }
           : { backgroundColor: barFillForRowType(rowType) }),
       }}
-      title={ev.name}
+      aria-label={`${ev.name}. Start: ${startText}. End: ${endText}.`}
+      onPointerEnter={(e) => {
+        clearHideTimer();
+        onHoverChange?.({
+          id: ev.id,
+          title: ev.name,
+          startText,
+          endText,
+          anchor: e.currentTarget.getBoundingClientRect(),
+          capturedZoom: zoom,
+        });
+      }}
+      onPointerLeave={() => {
+        clearHideTimer();
+        leaveHideTimerRef.current = setTimeout(() => {
+          onHoverChange?.(null);
+          leaveHideTimerRef.current = null;
+        }, 120);
+      }}
     >
       <span className="block min-w-0 flex-1 truncate px-1.5 text-[10px] font-medium leading-tight text-[#eee] sm:text-xs">
         {ev.name}
@@ -80,7 +163,12 @@ function TimelineEventBar({
 }
 
 export function Timeline() {
-  const [nowMs, setNowMs] = useState(() => Date.now());
+  /** Match SSR + first client render: wall clock only after mount (avoids hydration mismatch). */
+  const [nowMs, setNowMs] = useState(() =>
+    Number.isFinite(EPOCH_MS) && EPOCH_MS > 0 ? EPOCH_MS : 0,
+  );
+  const [eventTooltip, setEventTooltip] =
+    useState<TimelineEventTooltipPayload | null>(null);
 
   const epochOk = Number.isFinite(EPOCH_MS) && EPOCH_MS > 0;
   const events = timelineData.events as TimelineEvent[];
@@ -97,16 +185,38 @@ export function Timeline() {
     onPointerUp,
     onPointerCancel,
     onLostPointerCapture,
-  } = useMissionTimelineScroll(EPOCH_MS, spanHours);
+  } = useMissionTimelineScroll(EPOCH_MS, spanHours, {
+    enableInitialScrollToNow: epochOk,
+  });
 
   const pxPerHour = BASE_PX_PER_HOUR * zoom;
   const pxPerMs = pxPerMsFromZoom(zoom);
 
   useEffect(() => {
     if (!epochOk) return;
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(id);
+    const tick = () => setNowMs(Date.now());
+    const timeoutId = window.setTimeout(tick, 0);
+    const intervalId = window.setInterval(tick, 1000);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+    };
   }, [epochOk]);
+
+  useEffect(() => {
+    if (!eventTooltip) return;
+    const el = scrollRef.current;
+    const hide = () => setEventTooltip(null);
+    el?.addEventListener("scroll", hide, { passive: true });
+    window.addEventListener("resize", hide);
+    return () => {
+      el?.removeEventListener("scroll", hide);
+      window.removeEventListener("resize", hide);
+    };
+  }, [eventTooltip, scrollRef]);
+
+  const tooltipToShow =
+    eventTooltip && eventTooltip.capturedZoom === zoom ? eventTooltip : null;
 
   const tickStepPx = TICK_STEP_HOURS * pxPerHour;
   const tickCount = Math.floor(spanHours / TICK_STEP_HOURS) + 1;
@@ -124,6 +234,12 @@ export function Timeline() {
 
   return (
     <FullscreenPanel className="flex flex-col">
+      {tooltipToShow &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <TimelineEventHoverTooltip payload={tooltipToShow} />,
+          document.body,
+        )}
       <section
         className="flex min-h-0 flex-1 flex-col rounded-[10px] border border-solid px-4 pt-1 sm:px-6 md:px-10"
         aria-label="Mission timeline"
@@ -223,6 +339,8 @@ export function Timeline() {
                             ev={ev}
                             epochMs={EPOCH_MS}
                             pxPerMs={pxPerMs}
+                            zoom={zoom}
+                            onHoverChange={setEventTooltip}
                           />
                         ))}
                       </div>
