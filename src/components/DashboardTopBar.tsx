@@ -44,7 +44,7 @@ function StatusDot({ color, label }: { color: string; label: string }) {
   return (
     <span
       className="inline-block size-2.5 shrink-0 rounded-full sm:size-3"
-      style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
+      style={{ backgroundColor: color, boxShadow: `0 0 0px ${color}` }}
       title={label}
       aria-label={label}
     />
