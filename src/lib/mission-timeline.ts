@@ -2,7 +2,7 @@ export const ROW_CONFIG = [
   { label: "ISS Event", type: "iss-event" },
   { label: "COL/MPCC", type: "col-mpcc" },
   { label: "Chanel 1", type: "chanel-1" },
-  { label: "Chamel 2", type: "chanel-2" },
+  { label: "Chanel 2", type: "chanel-2" },
   { label: "Chanel 3", type: "chanel-3" },
   { label: "Operation", type: "operation" },
 ] as const;
