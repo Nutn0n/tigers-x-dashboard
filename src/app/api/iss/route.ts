@@ -9,7 +9,7 @@ import {
   degreesLong,
 } from "satellite.js";
 import type { PositionAndVelocity, SatRec } from "satellite.js";
-import { groundTrackToSvgPaths } from "@/lib/iss-map-projection";
+import { groundTrackToFadedStrokeSegments } from "@/lib/iss-map-projection";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,12 @@ const CELESTRAK_TLE =
   "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle";
 
 const TLE_CACHE_MS = 60 * 60 * 1000;
-const ORBIT_SAMPLES = 512;
+/** Samples per one orbital period (each span uses this × orbit count). */
+const ORBIT_SAMPLES_PER_PERIOD = 512;
+const ORBITS_BEHIND = 2;
+const ORBITS_AHEAD = 2;
+/** Temporal chunks for opacity ramp along each track. */
+const FADE_CHUNK_COUNT = 64;
 /** Fallback LEO period if mean motion is unusable (minutes). */
 const FALLBACK_PERIOD_MIN = 92.68;
 
@@ -78,17 +83,20 @@ function orbitPeriodMinutes(pv: PositionAndVelocity): number {
   return (2 * Math.PI) / nm;
 }
 
-function sampleGroundTrack(
+function sampleGroundTrackRange(
   satrec: SatRec,
-  start: Date,
-  periodMin: number,
+  tStart: Date,
+  tEnd: Date,
+  steps: number,
 ): { lat: number; lon: number }[] {
-  const periodMs = periodMin * 60 * 1000;
+  const t0 = tStart.getTime();
+  const t1 = tEnd.getTime();
+  const span = t1 - t0;
   const pts: { lat: number; lon: number }[] = [];
-  const t0 = start.getTime();
+  const denom = Math.max(1, steps - 1);
 
-  for (let i = 0; i < ORBIT_SAMPLES; i++) {
-    const t = new Date(t0 + (i / ORBIT_SAMPLES) * periodMs);
+  for (let i = 0; i < steps; i++) {
+    const t = new Date(t0 + (i / denom) * span);
     const s = propagateState(satrec, t);
     if (s) pts.push({ lat: s.latitude, lon: s.longitude });
   }
@@ -113,14 +121,43 @@ export async function GET() {
       now,
     );
     const periodMinutes = orbitPeriodMinutes(pvNow);
-    const groundPoints = sampleGroundTrack(satrec, now, periodMinutes);
-    if (groundPoints.length < ORBIT_SAMPLES / 4) {
+    const periodMs = periodMinutes * 60 * 1000;
+    const pastSteps = ORBIT_SAMPLES_PER_PERIOD * ORBITS_BEHIND;
+    const futureSteps = ORBIT_SAMPLES_PER_PERIOD * ORBITS_AHEAD;
+    const pastPoints = sampleGroundTrackRange(
+      satrec,
+      new Date(now.getTime() - ORBITS_BEHIND * periodMs),
+      now,
+      pastSteps,
+    );
+    const futurePoints = sampleGroundTrackRange(
+      satrec,
+      now,
+      new Date(now.getTime() + ORBITS_AHEAD * periodMs),
+      futureSteps,
+    );
+    if (
+      pastPoints.length < pastSteps / 4 ||
+      futurePoints.length < futureSteps / 4
+    ) {
       return NextResponse.json(
         { error: "Insufficient orbit samples from SGP4" },
         { status: 502 },
       );
     }
-    const orbitPaths = groundTrackToSvgPaths(groundPoints);
+    const orbitPastSegments = groundTrackToFadedStrokeSegments(pastPoints, {
+      chunkCount: FADE_CHUNK_COUNT,
+      opacityStart: 0,
+      opacityEnd: 0.3,
+    });
+    const orbitFutureSegments = groundTrackToFadedStrokeSegments(
+      futurePoints,
+      {
+        chunkCount: FADE_CHUNK_COUNT,
+        opacityStart: 1,
+        opacityEnd: 0,
+      },
+    );
 
     return NextResponse.json({
       latitude,
@@ -128,7 +165,8 @@ export async function GET() {
       altitude,
       velocity,
       periodMinutes,
-      orbitPaths,
+      orbitPastSegments,
+      orbitFutureSegments,
       timestamp: Math.floor(now.getTime() / 1000),
     });
   } catch {

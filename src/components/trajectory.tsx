@@ -10,13 +10,16 @@ import {
 
 const POLL_MS = 5000;
 
+type OrbitStrokeSegment = { d: string; strokeOpacity: number };
+
 type IssApiOk = {
   latitude: number;
   longitude: number;
   altitude: number;
   velocity: number;
   periodMinutes: number;
-  orbitPaths: string[];
+  orbitPastSegments: OrbitStrokeSegment[];
+  orbitFutureSegments: OrbitStrokeSegment[];
   timestamp: number;
 };
 
@@ -49,7 +52,24 @@ export function Trajectory() {
         altitude: data.altitude,
         velocity: data.velocity,
         periodMinutes: data.periodMinutes,
-        orbitPaths: Array.isArray(data.orbitPaths) ? data.orbitPaths : [],
+        orbitPastSegments: Array.isArray(data.orbitPastSegments)
+          ? data.orbitPastSegments.filter(
+              (s): s is OrbitStrokeSegment =>
+                s != null &&
+                typeof s === "object" &&
+                typeof (s as OrbitStrokeSegment).d === "string" &&
+                typeof (s as OrbitStrokeSegment).strokeOpacity === "number",
+            )
+          : [],
+        orbitFutureSegments: Array.isArray(data.orbitFutureSegments)
+          ? data.orbitFutureSegments.filter(
+              (s): s is OrbitStrokeSegment =>
+                s != null &&
+                typeof s === "object" &&
+                typeof (s as OrbitStrokeSegment).d === "string" &&
+                typeof (s as OrbitStrokeSegment).strokeOpacity === "number",
+            )
+          : [],
         timestamp: data.timestamp,
       });
     } catch {
@@ -87,12 +107,27 @@ export function Trajectory() {
             aria-hidden
           >
             {iss != null && !fetchError
-              ? iss.orbitPaths.map((d, i) => (
+              ? iss.orbitPastSegments.map((seg, i) => (
                   <path
-                    key={i}
-                    d={d}
+                    key={`p-${i}`}
+                    d={seg.d}
                     fill="none"
                     stroke="#ffffff"
+                    strokeOpacity={seg.strokeOpacity}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))
+              : null}
+            {iss != null && !fetchError
+              ? iss.orbitFutureSegments.map((seg, i) => (
+                  <path
+                    key={`f-${i}`}
+                    d={seg.d}
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeOpacity={seg.strokeOpacity}
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
