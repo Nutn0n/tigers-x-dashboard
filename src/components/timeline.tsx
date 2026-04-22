@@ -8,7 +8,7 @@ import { formatBangkokDdMmYyHhMmSs } from "@/lib/dashboard-time";
 import { DASHBOARD_PANEL_TITLE_CLASS } from "@/lib/dashboard-panel-styles";
 import {
   BASE_PX_PER_HOUR,
-  barFillForRowType,
+  barFillBackgroundStyle,
   barLeftWidthPx,
   bucketEventsByRow,
   computeSpanHours,
@@ -31,6 +31,9 @@ const EPOCH_MS = Date.parse(timelineData.mission.epoch);
 
 const FILLED_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-black/25 text-left shadow-[0_0_0_1px_rgba(0,0,0,0.35)]";
+/** ISS + COL/MPCC: solid fill, no border or outer ring. */
+const FILLED_BAR_PLAIN_CLASS =
+  "absolute top-1 bottom-1 flex items-center overflow-hidden rounded text-left";
 const OUTLINE_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-white bg-transparent text-left";
 
@@ -124,16 +127,23 @@ function TimelineEventBar({
     pxPerMs,
   );
   const outline = isOutlineOnlyLane(rowType);
+  const plainFilledLane =
+    rowType === "iss-event" || rowType === "col-mpcc";
+  const barClassName = outline
+    ? OUTLINE_BAR_CLASS
+    : plainFilledLane
+      ? FILLED_BAR_PLAIN_CLASS
+      : FILLED_BAR_CLASS;
 
   return (
     <div
-      className={outline ? OUTLINE_BAR_CLASS : FILLED_BAR_CLASS}
+      className={barClassName}
       style={{
         left,
         width,
         ...(outline
           ? { backgroundColor: "transparent" }
-          : { backgroundColor: barFillForRowType(rowType) }),
+          : barFillBackgroundStyle(rowType)),
       }}
       aria-label={`${ev.name}. Start: ${startText}. End: ${endText}.`}
       onPointerEnter={(e) => {
@@ -186,6 +196,7 @@ export function Timeline() {
     onPointerCancel,
     onLostPointerCapture,
   } = useMissionTimelineScroll(EPOCH_MS, spanHours, {
+    nowMs,
     enableInitialScrollToNow: epochOk,
   });
 
