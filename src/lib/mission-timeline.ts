@@ -42,7 +42,7 @@ export function missionDayNumberFromEpoch(
 
 /** Chanel 1–3 bars: vertical gradient (stops match → solid #D54722). */
 const CHANEL_ORANGE = "#D54722";
-export const CHANEL_ROW_VERTICAL_GRADIENT = `linear-gradient(180deg, ${CHANEL_ORANGE} 0%, ${CHANEL_ORANGE} 100%)`;
+const CHANEL_ROW_VERTICAL_GRADIENT = `linear-gradient(180deg, ${CHANEL_ORANGE} 0%, ${CHANEL_ORANGE} 100%)`;
 
 const DEFAULT_BAR_BG = "#434343";
 
@@ -88,7 +88,7 @@ function rowIndexForType(t: string): number | null {
   return i >= 0 ? i : null;
 }
 
-export function barFillForRowType(rowType: RowType): string {
+function barFillForRowType(rowType: RowType): string {
   if (
     rowType === "chanel-1" ||
     rowType === "chanel-2" ||
@@ -139,79 +139,10 @@ export function bucketEventsByRow(
   return byRow;
 }
 
-/**
- * Active when nowMs ∈ [start, end). Rows are checked in ROW_CONFIG order so
- * narrower lanes (e.g. ISS) win over long operation blocks when both overlap.
- */
-export function findCurrentTimelineEvent(
-  nowMs: number,
-  events: TimelineEvent[],
-): TimelineEvent | null {
-  for (const row of ROW_CONFIG) {
-    for (const ev of events) {
-      if (ev.type !== row.type) continue;
-      const startMs = Date.parse(ev.start);
-      const endMs = Date.parse(ev.end);
-      if (
-        !Number.isFinite(startMs) ||
-        !Number.isFinite(endMs) ||
-        endMs <= startMs
-      ) {
-        continue;
-      }
-      if (nowMs >= startMs && nowMs < endMs) return ev;
-    }
-  }
-  return null;
-}
-
-/** Earliest event with start strictly after nowMs; ties broken like current (row order, then file order). */
-export function findNextTimelineEvent(
-  nowMs: number,
-  events: TimelineEvent[],
-): TimelineEvent | null {
-  let best: {
-    ev: TimelineEvent;
-    startMs: number;
-    rowIdx: number;
-    fileIdx: number;
-  } | null = null;
-
-  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
-    const ev = events[fileIdx];
-    const rowIdx = rowIndexForType(ev.type);
-    if (rowIdx === null) continue;
-
-    const startMs = Date.parse(ev.start);
-    const endMs = Date.parse(ev.end);
-    if (
-      !Number.isFinite(startMs) ||
-      !Number.isFinite(endMs) ||
-      endMs <= startMs
-    ) {
-      continue;
-    }
-    if (startMs <= nowMs) continue;
-
-    if (
-      !best ||
-      startMs < best.startMs ||
-      (startMs === best.startMs &&
-        (rowIdx < best.rowIdx ||
-          (rowIdx === best.rowIdx && fileIdx < best.fileIdx)))
-    ) {
-      best = { ev, startMs, rowIdx, fileIdx };
-    }
-  }
-
-  return best === null ? null : best.ev;
-}
-
 const CHANEL_ROW_TYPES = ["chanel-1", "chanel-2", "chanel-3"] as const;
 
 /**
- * Active chanel row only (chanel-1 → chanel-3 order). Same interval rule as
- * findCurrentTimelineEvent.
+ * Active chanel row only (chanel-1 → chanel-3 order). nowMs ∈ [start, end).
  */
 export function findCurrentChanelTimelineEvent(
   nowMs: number,
@@ -235,7 +166,7 @@ export function findCurrentChanelTimelineEvent(
   return null;
 }
 
-/** Next upcoming chanel event only; same tie-break as findNextTimelineEvent. */
+/** Next upcoming chanel event only (row order, then file order). */
 export function findNextChanelTimelineEvent(
   nowMs: number,
   events: TimelineEvent[],

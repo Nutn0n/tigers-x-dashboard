@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import { withBasePath } from "@/lib/app-path";
 import {
   latLonToMapSvg,
   MAP_SVG_HEIGHT,
@@ -15,10 +16,8 @@ type IssApiOk = {
   longitude: number;
   altitude: number;
   velocity: number;
-  periodMinutes: number;
   orbitPastPaths: string[];
   orbitFuturePaths: string[];
-  timestamp: number;
 };
 
 function formatAltitudeKm(km: number) {
@@ -36,7 +35,7 @@ export function Trajectory() {
 
   const fetchIss = useCallback(async () => {
     try {
-      const res = await fetch("/api/iss", { cache: "no-store" });
+      const res = await fetch(withBasePath("/api/iss"), { cache: "no-store" });
       const data = (await res.json()) as IssApiOk & { error?: string };
       if (!res.ok || data.error) {
         setIss(null);
@@ -49,14 +48,12 @@ export function Trajectory() {
         longitude: data.longitude,
         altitude: data.altitude,
         velocity: data.velocity,
-        periodMinutes: data.periodMinutes,
         orbitPastPaths: Array.isArray(data.orbitPastPaths)
           ? data.orbitPastPaths
           : [],
         orbitFuturePaths: Array.isArray(data.orbitFuturePaths)
           ? data.orbitFuturePaths
           : [],
-        timestamp: data.timestamp,
       });
     } catch {
       setIss(null);
@@ -82,7 +79,7 @@ export function Trajectory() {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative grid min-h-0 w-full flex-1 place-items-center overflow-hidden">
           <img
-            src="/map.svg"
+            src={withBasePath("/map.svg")}
             alt="Trajectory map"
             className="col-start-1 row-start-1 max-h-full max-w-full object-contain object-center"
           />

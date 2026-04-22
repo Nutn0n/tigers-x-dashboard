@@ -65,20 +65,6 @@ export function formatUtcDateDdMmYyyy(now: Date) {
   return `${d}/${m}/${y}`;
 }
 
-/** Wall-clock date and time in Bangkok (`Asia/Bangkok`), `dd/mm/yyyy` + 24h time. */
-export function formatBangkokDateTime(now: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Bangkok",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(now);
-}
-
 /** Bangkok local time for an instant: `dd/mm/yy hh:mm:ss` (24h). */
 export function formatBangkokDdMmYyHhMmSs(at: Date) {
   const s = new Intl.DateTimeFormat("en-GB", {

@@ -151,10 +151,8 @@ export async function GET() {
       longitude,
       altitude,
       velocity,
-      periodMinutes,
       orbitPastPaths,
       orbitFuturePaths,
-      timestamp: Math.floor(now.getTime() / 1000),
     });
   } catch {
     return NextResponse.json(
