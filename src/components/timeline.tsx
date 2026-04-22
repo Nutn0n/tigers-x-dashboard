@@ -57,7 +57,7 @@ function TimelineEventHoverTooltip({
   const top = anchor.top - 8;
   return (
     <div
-      className="pointer-events-none fixed z-[200] max-w-[min(22rem,calc(100vw-1rem))] rounded-md border border-solid border-[#eee]/25 bg-[#141414] px-2.5 py-2 text-left shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+      className="pointer-events-none fixed z-[200] max-w-[min(22rem,calc(100vw-1rem))] rounded-md border border-solid border-[#eee]/25 bg-[#000000] px-2.5 py-2 text-left shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
       style={{
         left,
         top,

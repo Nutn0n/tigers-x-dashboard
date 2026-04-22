@@ -8,6 +8,19 @@ function pad3(n: number) {
   return String(n).padStart(3, "0");
 }
 
+/**
+ * Non-negative duration as `hh:mm:ss` (hours may exceed 23; hours use at least
+ * two digits when under 100).
+ */
+export function formatHhMmSsFromDurationMs(durationMs: number) {
+  let sec = Math.floor(Math.max(0, durationMs) / 1000);
+  const h = Math.floor(sec / 3600);
+  sec %= 3600;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(h).padStart(2, "0")}:${pad2(m)}:${pad2(s)}`;
+}
+
 /** `ddd:hh:mm:ss` from a non-negative whole-second duration. */
 function formatDddHhMmSs(totalSeconds: number) {
   const days = Math.floor(totalSeconds / 86400);

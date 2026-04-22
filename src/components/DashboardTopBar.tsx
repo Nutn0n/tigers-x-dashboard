@@ -176,6 +176,52 @@ function LocalTimeColumns({
 
 const MISSION_EPOCH_MS = Date.parse(timelineData.mission.epoch);
 
+const TOPBAR_COLLAPSED_KEY = "dashboard-topbar-collapsed";
+
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M3.5 5.25L7 8.75l3.5-3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronUpIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M3.5 8.75L7 5.25l3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function MetTile({ now }: { now: Date }) {
   const met =
     Number.isFinite(MISSION_EPOCH_MS) && MISSION_EPOCH_MS > 0
@@ -230,40 +276,89 @@ export function DashboardTopBar() {
   const [timezoneSlots, setTimezoneSlots] = useState<TimezoneSlotTuple>(
     DEFAULT_TIMEZONE_SLOTS,
   );
+  const [topBarCollapsed, setTopBarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(TOPBAR_COLLAPSED_KEY) === "1") {
+        setTopBarCollapsed(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleTopBar = () => {
+    setTopBarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(TOPBAR_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const aosActive = false;
   const losActive = false;
 
   return (
-    <header className="w-full">
-      <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-stretch md:gap-4">
-        <div className="flex w-full flex-shrink-0 flex-row items-center justify-center gap-3 md:contents">
-          <BrandedImageSlot
-            frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-square w-[min(22vw,7.5rem)] shrink-0`}
-            src="/patch.png"
-            alt="Mission patch"
-            sizes="(max-width: 768px) 22vw, 120px"
-            aria-label="Mission patch"
-          />
+    <div className="w-full">
+      <div
+        id="dashboard-top-bar-main"
+        className={topBarCollapsed ? "hidden" : "block"}
+        aria-hidden={topBarCollapsed}
+      >
+        <header className="w-full">
+          <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-stretch md:gap-4">
+            <div className="flex w-full flex-shrink-0 flex-row items-center justify-center gap-3 md:contents">
+              <BrandedImageSlot
+                frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-square w-[min(22vw,7.5rem)] shrink-0`}
+                src="/patch.png"
+                alt="Mission patch"
+                sizes="(max-width: 768px) 22vw, 120px"
+                aria-label="Mission patch"
+              />
 
-          <BrandedImageSlot
-            frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-[3/1] h-[min(11vw,60px)] shrink-0 self-center`}
-            src="/logo.png"
-            alt="Company logo"
-            sizes="(max-width: 768px) 23vw, 180px"
-            aria-label="Company logo"
-          />
-        </div>
+              <BrandedImageSlot
+                frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-[3/1] h-[min(11vw,60px)] shrink-0 self-center`}
+                src="/logo.png"
+                alt="Company logo"
+                sizes="(max-width: 768px) 23vw, 180px"
+                aria-label="Company logo"
+              />
+            </div>
 
-        <GmtTile now={now} />
-        <LocalTimeColumns
-          now={now}
-          timezoneSlots={timezoneSlots}
-          setTimezoneSlots={setTimezoneSlots}
-        />
-        <MetTile now={now} />
-        <AosLosTile aosActive={aosActive} losActive={losActive} />
+            <GmtTile now={now} />
+            <LocalTimeColumns
+              now={now}
+              timezoneSlots={timezoneSlots}
+              setTimezoneSlots={setTimezoneSlots}
+            />
+            <MetTile now={now} />
+            <AosLosTile aosActive={aosActive} losActive={losActive} />
+          </div>
+        </header>
       </div>
-    </header>
+
+      <button
+        type="button"
+        className="flex w-full cursor-pointer items-center justify-center gap-1 border-t border-solid border-[#eee]/15 py-1 text-[#eee]/55 transition-colors hover:bg-[#0a0a0a] hover:text-[#eee]/90"
+        onClick={toggleTopBar}
+        aria-expanded={!topBarCollapsed}
+        aria-controls="dashboard-top-bar-main"
+        title={topBarCollapsed ? "Show top bar" : "Hide top bar"}
+      >
+        {topBarCollapsed ? (
+          <ChevronDownIcon className="shrink-0" />
+        ) : (
+          <ChevronUpIcon className="shrink-0" />
+        )}
+        <span className="sr-only">
+          {topBarCollapsed ? "Show top bar" : "Hide top bar"}
+        </span>
+      </button>
+    </div>
   );
 }

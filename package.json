@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "restart:43928": "bash scripts/restart-43928.sh"
   },
   "dependencies": {
     "next": "16.2.4",
