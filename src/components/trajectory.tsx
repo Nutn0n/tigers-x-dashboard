@@ -10,16 +10,14 @@ import {
 
 const POLL_MS = 5000;
 
-type OrbitStrokeSegment = { d: string; strokeOpacity: number };
-
 type IssApiOk = {
   latitude: number;
   longitude: number;
   altitude: number;
   velocity: number;
   periodMinutes: number;
-  orbitPastSegments: OrbitStrokeSegment[];
-  orbitFutureSegments: OrbitStrokeSegment[];
+  orbitPastPaths: string[];
+  orbitFuturePaths: string[];
   timestamp: number;
 };
 
@@ -52,23 +50,11 @@ export function Trajectory() {
         altitude: data.altitude,
         velocity: data.velocity,
         periodMinutes: data.periodMinutes,
-        orbitPastSegments: Array.isArray(data.orbitPastSegments)
-          ? data.orbitPastSegments.filter(
-              (s): s is OrbitStrokeSegment =>
-                s != null &&
-                typeof s === "object" &&
-                typeof (s as OrbitStrokeSegment).d === "string" &&
-                typeof (s as OrbitStrokeSegment).strokeOpacity === "number",
-            )
+        orbitPastPaths: Array.isArray(data.orbitPastPaths)
+          ? data.orbitPastPaths
           : [],
-        orbitFutureSegments: Array.isArray(data.orbitFutureSegments)
-          ? data.orbitFutureSegments.filter(
-              (s): s is OrbitStrokeSegment =>
-                s != null &&
-                typeof s === "object" &&
-                typeof (s as OrbitStrokeSegment).d === "string" &&
-                typeof (s as OrbitStrokeSegment).strokeOpacity === "number",
-            )
+        orbitFuturePaths: Array.isArray(data.orbitFuturePaths)
+          ? data.orbitFuturePaths
           : [],
         timestamp: data.timestamp,
       });
@@ -107,13 +93,12 @@ export function Trajectory() {
             aria-hidden
           >
             {iss != null && !fetchError
-              ? iss.orbitPastSegments.map((seg, i) => (
+              ? iss.orbitPastPaths.map((d, i) => (
                   <path
                     key={`p-${i}`}
-                    d={seg.d}
+                    d={d}
                     fill="none"
-                    stroke="#ffffff"
-                    strokeOpacity={seg.strokeOpacity}
+                    stroke="#5e5e5e"
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -121,13 +106,12 @@ export function Trajectory() {
                 ))
               : null}
             {iss != null && !fetchError
-              ? iss.orbitFutureSegments.map((seg, i) => (
+              ? iss.orbitFuturePaths.map((d, i) => (
                   <path
                     key={`f-${i}`}
-                    d={seg.d}
+                    d={d}
                     fill="none"
                     stroke="#ffffff"
-                    strokeOpacity={seg.strokeOpacity}
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -135,14 +119,7 @@ export function Trajectory() {
                 ))
               : null}
             {iss != null && pos ? (
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r="10"
-                fill="#ffffff"
-                stroke="rgba(0,0,0,0.5)"
-                strokeWidth="2"
-              >
+              <circle cx={pos.x} cy={pos.y} r="10" fill="#ffffff">
                 <title>
                   ISS {iss.latitude.toFixed(2)}°, {iss.longitude.toFixed(2)}°
                 </title>

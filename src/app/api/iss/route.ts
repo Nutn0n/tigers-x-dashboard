@@ -9,7 +9,7 @@ import {
   degreesLong,
 } from "satellite.js";
 import type { PositionAndVelocity, SatRec } from "satellite.js";
-import { groundTrackToFadedStrokeSegments } from "@/lib/iss-map-projection";
+import { groundTrackToSvgPaths } from "@/lib/iss-map-projection";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +21,6 @@ const TLE_CACHE_MS = 60 * 60 * 1000;
 const ORBIT_SAMPLES_PER_PERIOD = 512;
 const ORBITS_BEHIND = 2;
 const ORBITS_AHEAD = 2;
-/** Temporal chunks for opacity ramp along each track. */
-const FADE_CHUNK_COUNT = 64;
 /** Fallback LEO period if mean motion is unusable (minutes). */
 const FALLBACK_PERIOD_MIN = 92.68;
 
@@ -145,19 +143,8 @@ export async function GET() {
         { status: 502 },
       );
     }
-    const orbitPastSegments = groundTrackToFadedStrokeSegments(pastPoints, {
-      chunkCount: FADE_CHUNK_COUNT,
-      opacityStart: 0,
-      opacityEnd: 0.3,
-    });
-    const orbitFutureSegments = groundTrackToFadedStrokeSegments(
-      futurePoints,
-      {
-        chunkCount: FADE_CHUNK_COUNT,
-        opacityStart: 1,
-        opacityEnd: 0,
-      },
-    );
+    const orbitPastPaths = groundTrackToSvgPaths(pastPoints);
+    const orbitFuturePaths = groundTrackToSvgPaths(futurePoints);
 
     return NextResponse.json({
       latitude,
@@ -165,8 +152,8 @@ export async function GET() {
       altitude,
       velocity,
       periodMinutes,
-      orbitPastSegments,
-      orbitFutureSegments,
+      orbitPastPaths,
+      orbitFuturePaths,
       timestamp: Math.floor(now.getTime() / 1000),
     });
   } catch {
