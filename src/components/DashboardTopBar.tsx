@@ -15,6 +15,7 @@ import {
   TIMEZONE_OPTIONS,
   type TimezoneSlotTuple,
 } from "@/lib/dashboard-time";
+import { withBasePath } from "@/lib/app-path";
 import {
   AOS_LOS_TILE_EXTRA,
   DOT_AOS,
@@ -89,7 +90,7 @@ function BrandedImageSlot({
   return (
     <div className={frameClass} aria-label={ariaLabel}>
       <Image
-        src={src}
+        src={withBasePath(src)}
         alt={alt}
         fill
         className="object-contain object-left px-2"
