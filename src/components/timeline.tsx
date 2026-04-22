@@ -265,7 +265,7 @@ export function Timeline() {
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 pb-2 pt-1">
             <div className="flex min-h-0 min-w-0 flex-1 flex-row gap-2">
               <div
-                className="flex w-[7.5rem] shrink-0 flex-col border-r border-solid border-[#eee]/20 pr-2 pt-9 sm:w-36"
+                className="flex w-[7.5rem] shrink-0 flex-col border-solid border-[#eee]/20 pr-2 pt-9 sm:w-36"
                 aria-hidden
               >
                 {ROW_CONFIG.map((row) => (
