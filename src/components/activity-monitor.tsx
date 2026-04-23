@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useMissionDataSource } from "@/components/data-source-provider";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
-import { missionEpochMs, missionTimelineEvents } from "@/data/data-source";
 import { formatHhMmSsFromDurationMs } from "@/lib/dashboard-time";
 import {
   findCurrentChanelTimelineEvent,
@@ -13,18 +13,23 @@ import {
   type TimelineEvent,
 } from "@/lib/mission-timeline";
 
-const EPOCH_MS = missionEpochMs;
-
 const TIMER_VALUE_CLASS =
   "shrink-0 font-mono text-xl font-semibold tabular-nums leading-none tracking-tight text-[#eee] sm:text-2xl";
 
 export function ActivityMonitor() {
+  const { timelineData } = useMissionDataSource();
+  const epochMs = Date.parse(timelineData.mission.epoch);
+  const events = timelineData.events as TimelineEvent[];
+
   const [nowMs, setNowMs] = useState(() =>
-    Number.isFinite(EPOCH_MS) && EPOCH_MS > 0 ? EPOCH_MS : 0,
+    Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0,
   );
 
-  const epochOk = Number.isFinite(EPOCH_MS) && EPOCH_MS > 0;
-  const events = missionTimelineEvents as TimelineEvent[];
+  const epochOk = Number.isFinite(epochMs) && epochMs > 0;
+
+  useEffect(() => {
+    setNowMs(Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0);
+  }, [epochMs]);
 
   useEffect(() => {
     if (!epochOk) return;
@@ -78,8 +83,8 @@ export function ActivityMonitor() {
   }, [stationNext, nowMs]);
 
   const missionDay = useMemo(
-    () => missionDayNumberFromEpoch(nowMs, EPOCH_MS),
-    [nowMs],
+    () => missionDayNumberFromEpoch(nowMs, epochMs),
+    [nowMs, epochMs],
   );
 
   return (

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { missionEpochMs } from "@/data/data-source";
+import { useMissionDataSource } from "@/components/data-source-provider";
 import {
   DEFAULT_TIMEZONE_SLOTS,
   formatGmtYearElapsed,
@@ -181,8 +181,6 @@ function LocalTimeColumns({
   );
 }
 
-const MISSION_EPOCH_MS = missionEpochMs;
-
 const TOPBAR_COLLAPSED_KEY = "dashboard-topbar-collapsed";
 
 function ChevronDownIcon({ className }: { className?: string }) {
@@ -230,9 +228,11 @@ function ChevronUpIcon({ className }: { className?: string }) {
 }
 
 function MetTile({ now }: { now: Date }) {
+  const { timelineData } = useMissionDataSource();
+  const missionEpochMs = Date.parse(timelineData.mission.epoch);
   const met =
-    Number.isFinite(MISSION_EPOCH_MS) && MISSION_EPOCH_MS > 0
-      ? formatMissionElapsedTime(now, MISSION_EPOCH_MS)
+    Number.isFinite(missionEpochMs) && missionEpochMs > 0
+      ? formatMissionElapsedTime(now, missionEpochMs)
       : "—:—:—:—";
 
   return (

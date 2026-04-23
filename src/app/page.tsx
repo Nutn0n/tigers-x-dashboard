@@ -1,4 +1,5 @@
 import { DashboardQuarterGrid } from "@/components/dashboard-quarter-grid";
+import { MissionDataProvider } from "@/components/data-source-provider";
 import { DashboardTopBar } from "@/components/DashboardTopBar";
 import { Iss } from "@/components/iss";
 import { Timeline } from "@/components/timeline";
@@ -11,21 +12,23 @@ import {
 
 export default function Home() {
   return (
-    <div className={DASHBOARD_PAGE_SHELL}>
-      <div className={DASHBOARD_CONTENT_MAX}>
-        <DashboardTopBar />
+    <MissionDataProvider>
+      <div className={DASHBOARD_PAGE_SHELL}>
+        <div className={DASHBOARD_CONTENT_MAX}>
+          <DashboardTopBar />
 
-        <div className={DASHBOARD_TOP_GRID}>
-          <div className={DASHBOARD_TOP_GRID_CELL}>
-            <Iss />
+          <div className={DASHBOARD_TOP_GRID}>
+            <div className={DASHBOARD_TOP_GRID_CELL}>
+              <Iss />
+            </div>
+            <div className={DASHBOARD_TOP_GRID_CELL}>
+              <Timeline />
+            </div>
           </div>
-          <div className={DASHBOARD_TOP_GRID_CELL}>
-            <Timeline />
-          </div>
+
+          <DashboardQuarterGrid />
         </div>
-
-        <DashboardQuarterGrid />
       </div>
-    </div>
+    </MissionDataProvider>
   );
 }
