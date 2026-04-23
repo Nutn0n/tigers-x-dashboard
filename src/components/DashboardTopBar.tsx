@@ -2,12 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import timelineData from "@/data/timeline.json";
+import { missionEpochMs } from "@/data/data-source";
 import {
   DEFAULT_TIMEZONE_SLOTS,
   formatGmtYearElapsed,
   formatMissionElapsedTime,
-  formatTimeZoneClock,
   formatUtcDateDdMmYyyy,
   ianaForTimezoneChoiceId,
   isTimezoneChoiceId,
@@ -117,7 +116,9 @@ function GmtTile({ now }: { now: Date }) {
       <span className="w-full text-2xl font-medium tabular-nums tracking-tight md:text-3xl">
         {gmtElapsed}
       </span>
-      <span className="w-full text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
+      <span className="w-full text-xs text-[#eee]/60 sm:text-sm">
+        ±ddd:hh:mm:ss
+      </span>
     </div>
   );
 }
@@ -137,7 +138,12 @@ function LocalTimeColumns({
         {TIMEZONE_SLOT_INDICES.map((slot) => {
           const choiceId = timezoneSlots[slot];
           const iana = ianaForTimezoneChoiceId(choiceId);
-          const localTime = formatTimeZoneClock(now, iana);
+          const localTime = new Intl.DateTimeFormat("en-GB", {
+            timeZone: iana,
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(now);
           return (
             <div
               key={slot}
@@ -175,7 +181,7 @@ function LocalTimeColumns({
   );
 }
 
-const MISSION_EPOCH_MS = Date.parse(timelineData.mission.epoch);
+const MISSION_EPOCH_MS = missionEpochMs;
 
 const TOPBAR_COLLAPSED_KEY = "dashboard-topbar-collapsed";
 

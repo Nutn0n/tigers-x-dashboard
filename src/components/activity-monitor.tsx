@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
-import timelineData from "@/data/timeline.json";
+import { missionEpochMs, missionTimelineEvents } from "@/data/data-source";
 import { formatHhMmSsFromDurationMs } from "@/lib/dashboard-time";
 import {
   findCurrentChanelTimelineEvent,
@@ -13,7 +13,7 @@ import {
   type TimelineEvent,
 } from "@/lib/mission-timeline";
 
-const EPOCH_MS = Date.parse(timelineData.mission.epoch);
+const EPOCH_MS = missionEpochMs;
 
 const TIMER_VALUE_CLASS =
   "shrink-0 font-mono text-xl font-semibold tabular-nums leading-none tracking-tight text-[#eee] sm:text-2xl";
@@ -24,7 +24,7 @@ export function ActivityMonitor() {
   );
 
   const epochOk = Number.isFinite(EPOCH_MS) && EPOCH_MS > 0;
-  const events = timelineData.events as TimelineEvent[];
+  const events = missionTimelineEvents as TimelineEvent[];
 
   useEffect(() => {
     if (!epochOk) return;

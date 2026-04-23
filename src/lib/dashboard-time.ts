@@ -40,11 +40,11 @@ export function formatGmtYearElapsed(now: Date) {
   return formatDddHhMmSs(Math.floor(diffMs / 1000));
 }
 
-/** Mission elapsed time since `epochUtcMs` — `ddd:hh:mm:ss` (clamped before epoch). */
+/** Signed mission time since `epochUtcMs` — `+ddd:hh:mm:ss` or `-ddd:hh:mm:ss`. */
 export function formatMissionElapsedTime(now: Date, epochUtcMs: number) {
-  let diffMs = now.getTime() - epochUtcMs;
-  if (diffMs < 0) diffMs = 0;
-  return formatDddHhMmSs(Math.floor(diffMs / 1000));
+  const diffSeconds = Math.floor((now.getTime() - epochUtcMs) / 1000);
+  const sign = diffSeconds < 0 ? "-" : "+";
+  return `${sign}${formatDddHhMmSs(Math.abs(diffSeconds))}`;
 }
 
 export function formatTimeZoneClock(now: Date, timeZone: string) {

@@ -9,12 +9,12 @@ import {
   degreesLong,
 } from "satellite.js";
 import type { PositionAndVelocity, SatRec } from "satellite.js";
+import { externalDataSources } from "@/data/data-source";
 import { groundTrackToSvgPaths } from "@/lib/iss-map-projection";
 
 export const dynamic = "force-dynamic";
 
-const CELESTRAK_TLE =
-  "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle";
+const CELESTRAK_TLE = externalDataSources.celestrakTle;
 
 const TLE_CACHE_MS = 60 * 60 * 1000;
 /** Samples per one orbital period (each span uses this × orbit count). */

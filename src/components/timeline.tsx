@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FullscreenPanel } from "@/components/FullscreenPanel";
-import timelineData from "@/data/timeline.json";
+import { missionEpochMs, missionTimelineEvents } from "@/data/data-source";
 import { formatBangkokDdMmYyHhMmSs } from "@/lib/dashboard-time";
 import { DASHBOARD_PANEL_TITLE_CLASS } from "@/lib/dashboard-panel-styles";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/lib/mission-timeline";
 import { useMissionTimelineScroll } from "@/hooks/use-mission-timeline-scroll";
 
-const EPOCH_MS = Date.parse(timelineData.mission.epoch);
+const EPOCH_MS = missionEpochMs;
 
 const FILLED_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-black/25 text-left shadow-[0_0_0_1px_rgba(0,0,0,0.35)]";
@@ -181,7 +181,7 @@ export function Timeline() {
     useState<TimelineEventTooltipPayload | null>(null);
 
   const epochOk = Number.isFinite(EPOCH_MS) && EPOCH_MS > 0;
-  const events = timelineData.events as TimelineEvent[];
+  const events = missionTimelineEvents as TimelineEvent[];
   const spanHours = epochOk
     ? computeSpanHours(EPOCH_MS, events)
     : MIN_TIMELINE_SPAN_HOURS;
