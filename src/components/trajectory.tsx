@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import { apiPaths } from "@/data/data-source";
 import { withBasePath } from "@/lib/app-path";
 import {
   latLonToMapSvg,
@@ -35,7 +36,7 @@ export function Trajectory() {
 
   const fetchIss = useCallback(async () => {
     try {
-      const res = await fetch(withBasePath("/api/iss"), { cache: "no-store" });
+      const res = await fetch(withBasePath(apiPaths.iss), { cache: "no-store" });
       const data = (await res.json()) as IssApiOk & { error?: string };
       if (!res.ok || data.error) {
         setIss(null);

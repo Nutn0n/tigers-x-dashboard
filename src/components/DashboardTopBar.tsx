@@ -2,12 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import timelineData from "@/data/timeline.json";
+import { useMissionDataSource } from "@/components/data-source-provider";
 import {
   DEFAULT_TIMEZONE_SLOTS,
   formatGmtYearElapsed,
   formatMissionElapsedTime,
-  formatTimeZoneClock,
   formatUtcDateDdMmYyyy,
   ianaForTimezoneChoiceId,
   isTimezoneChoiceId,
@@ -117,7 +116,9 @@ function GmtTile({ now }: { now: Date }) {
       <span className="w-full text-2xl font-medium tabular-nums tracking-tight md:text-3xl">
         {gmtElapsed}
       </span>
-      <span className="w-full text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
+      <span className="w-full text-xs text-[#eee]/60 sm:text-sm">
+        ±ddd:hh:mm:ss
+      </span>
     </div>
   );
 }
@@ -137,7 +138,12 @@ function LocalTimeColumns({
         {TIMEZONE_SLOT_INDICES.map((slot) => {
           const choiceId = timezoneSlots[slot];
           const iana = ianaForTimezoneChoiceId(choiceId);
-          const localTime = formatTimeZoneClock(now, iana);
+          const localTime = new Intl.DateTimeFormat("en-GB", {
+            timeZone: iana,
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(now);
           return (
             <div
               key={slot}
@@ -174,8 +180,6 @@ function LocalTimeColumns({
     </div>
   );
 }
-
-const MISSION_EPOCH_MS = Date.parse(timelineData.mission.epoch);
 
 const TOPBAR_COLLAPSED_KEY = "dashboard-topbar-collapsed";
 
@@ -224,9 +228,11 @@ function ChevronUpIcon({ className }: { className?: string }) {
 }
 
 function MetTile({ now }: { now: Date }) {
+  const { timelineData } = useMissionDataSource();
+  const missionEpochMs = Date.parse(timelineData.mission.epoch);
   const met =
-    Number.isFinite(MISSION_EPOCH_MS) && MISSION_EPOCH_MS > 0
-      ? formatMissionElapsedTime(now, MISSION_EPOCH_MS)
+    Number.isFinite(missionEpochMs) && missionEpochMs > 0
+      ? formatMissionElapsedTime(now, missionEpochMs)
       : "—:—:—:—";
 
   return (

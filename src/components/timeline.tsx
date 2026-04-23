@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FullscreenPanel } from "@/components/FullscreenPanel";
-import timelineData from "@/data/timeline.json";
+import { useMissionDataSource } from "@/components/data-source-provider";
 import { formatBangkokDdMmYyHhMmSs } from "@/lib/dashboard-time";
 import { DASHBOARD_PANEL_TITLE_CLASS } from "@/lib/dashboard-panel-styles";
 import {
@@ -26,8 +26,6 @@ import {
   type TimelineEvent,
 } from "@/lib/mission-timeline";
 import { useMissionTimelineScroll } from "@/hooks/use-mission-timeline-scroll";
-
-const EPOCH_MS = Date.parse(timelineData.mission.epoch);
 
 const FILLED_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-black/25 text-left shadow-[0_0_0_1px_rgba(0,0,0,0.35)]";
@@ -173,18 +171,25 @@ function TimelineEventBar({
 }
 
 export function Timeline() {
+  const { timelineData } = useMissionDataSource();
+  const epochMs = Date.parse(timelineData.mission.epoch);
+  const events = timelineData.events as TimelineEvent[];
+
   /** Match SSR + first client render: wall clock only after mount (avoids hydration mismatch). */
   const [nowMs, setNowMs] = useState(() =>
-    Number.isFinite(EPOCH_MS) && EPOCH_MS > 0 ? EPOCH_MS : 0,
+    Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0,
   );
   const [eventTooltip, setEventTooltip] =
     useState<TimelineEventTooltipPayload | null>(null);
 
-  const epochOk = Number.isFinite(EPOCH_MS) && EPOCH_MS > 0;
-  const events = timelineData.events as TimelineEvent[];
+  const epochOk = Number.isFinite(epochMs) && epochMs > 0;
   const spanHours = epochOk
-    ? computeSpanHours(EPOCH_MS, events)
+    ? computeSpanHours(epochMs, events)
     : MIN_TIMELINE_SPAN_HOURS;
+
+  useEffect(() => {
+    setNowMs(Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0);
+  }, [epochMs]);
 
   const {
     scrollRef,
@@ -195,7 +200,7 @@ export function Timeline() {
     onPointerUp,
     onPointerCancel,
     onLostPointerCapture,
-  } = useMissionTimelineScroll(EPOCH_MS, spanHours, {
+  } = useMissionTimelineScroll(epochMs, spanHours, {
     nowMs,
     enableInitialScrollToNow: epochOk,
   });
@@ -238,10 +243,10 @@ export function Timeline() {
     spanHours,
     pxPerHour,
     nowMs,
-    epochMs: EPOCH_MS,
+    epochMs,
     pxPerMs,
   });
-  const nowLeftPx = nowLineLeftPx(nowMs, EPOCH_MS, pxPerMs);
+  const nowLeftPx = nowLineLeftPx(nowMs, epochMs, pxPerMs);
 
   return (
     <FullscreenPanel className="flex flex-col">
@@ -305,13 +310,13 @@ export function Timeline() {
                       const hour = i * TICK_STEP_HOURS;
                       if (hour > spanHours) return null;
                       const left = hour * pxPerHour;
-                      const tickMs = EPOCH_MS + hour * MS_PER_HOUR;
+                      const tickMs = epochMs + hour * MS_PER_HOUR;
                       const tickColumnWidth = Math.max(
                         1,
                         Math.min(tickStepPx, trackWidthPx - left),
                       );
                       const offsetLabel = formatOffsetFromEpoch(
-                        EPOCH_MS,
+                        epochMs,
                         tickMs,
                       );
                       const bangkokLabel = formatBangkokDdMmYyHhMmSs(
@@ -348,7 +353,7 @@ export function Timeline() {
                             key={ev.id}
                             rowType={row.type}
                             ev={ev}
-                            epochMs={EPOCH_MS}
+                            epochMs={epochMs}
                             pxPerMs={pxPerMs}
                             zoom={zoom}
                             onHoverChange={setEventTooltip}
