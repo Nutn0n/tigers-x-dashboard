@@ -1,0 +1,51 @@
+{
+  "mission": {
+    "id": "tigers-x",
+    "name": "Tigers-X",
+    "epoch": "2026-04-20T20:20:20.000Z"
+  },
+  "events": [
+    {
+      "id": "example-1",
+      "name": "Day 1 Operations",
+      "type": "operation",
+      "start": "2026-04-27T00:00:00.000Z",
+      "end": "2026-04-28T00:00:00.000Z"
+    },
+    {
+      "id": "example-2",
+      "name": "Daily Planning Conference",
+      "type": "iss-event",
+      "start": "2026-04-27T06:15:00.000Z",
+      "end": "2026-04-27T06:45:00.000Z"
+    },
+    {
+      "id": "example-3",
+      "name": "COL/MPCC Coordination Window",
+      "type": "col-mpcc",
+      "start": "2026-04-27T07:00:00.000Z",
+      "end": "2026-04-27T07:45:00.000Z"
+    },
+    {
+      "id": "example-4",
+      "name": "Channel 1 Operation",
+      "type": "chanel-1",
+      "start": "2026-04-27T10:10:00.000Z",
+      "end": "2026-04-27T10:42:43.500Z"
+    },
+    {
+      "id": "example-5",
+      "name": "Channel 2 Observation",
+      "type": "chanel-2",
+      "start": "2026-04-27T11:15:27.000Z",
+      "end": "2026-04-27T12:15:27.000Z"
+    },
+    {
+      "id": "example-6",
+      "name": "Channel 3 Sequence",
+      "type": "chanel-3",
+      "start": "2026-04-27T12:30:00.000Z",
+      "end": "2026-04-27T13:00:00.000Z"
+    }
+  ]
+}
