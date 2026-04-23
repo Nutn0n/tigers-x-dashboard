@@ -1,5 +1,7 @@
 # TIGERS-X Mission Operations Dashboard
 
+![mission-patch](public/patch.png)
+
 This is a web-based dashboard designed to display telemetry, telecommands, and status updates to support mission operations for the TIGERS-X payload in the ICE Cubes Facility on the Columbus Module aboard the International Space Station.
 
 **Deployed at:** https://dashboard.tigers-x.ishalab.space
@@ -19,7 +21,7 @@ The goal of this dashboard is to support mission operations in coordination with
 
 The website utilizes data from three sources:
 
-1. `timeline.json` for station and mission operation planning  
+1. `mission-operation.json` for station and mission operation planning 
 2. Public API for telemetry and telecommand status  
 3. International Space Station public API  
 
@@ -28,19 +30,56 @@ The website utilizes data from three sources:
 ```json
 [
   {
-    "id": "unique-event-id",
-    "name": "ISS proximity operations briefing",
-    "type": "iss-event",
-    "start": "2026-04-22T06:00:00.000Z",
-    "end": "2026-04-22T07:30:00.000Z"
+  "mission": {
+    "id": "tigers-x",
+    "name": "Tigers-X",
+    "epoch": "2026-04-20T20:20:20.000Z"
   },
-  {
-    "id": "unique-event-id-2",
-    "name": "Payload operation - Day 1",
-    "type": "operation",
-    "start": "2026-04-22T00:00:00.000Z",
-    "end": "2026-04-23T00:00:00.000Z"
-  }
+  "events": [
+    {
+      "id": "example-1",
+      "name": "Day 1 Operations",
+      "type": "operation",
+      "start": "2026-04-27T00:00:00.000Z",
+      "end": "2026-04-28T00:00:00.000Z"
+    },
+    {
+      "id": "example-2",
+      "name": "Daily Planning Conference",
+      "type": "iss-event",
+      "start": "2026-04-27T06:15:00.000Z",
+      "end": "2026-04-27T06:45:00.000Z"
+    },
+    {
+      "id": "example-3",
+      "name": "COL/MPCC Coordination Window",
+      "type": "col-mpcc",
+      "start": "2026-04-27T07:00:00.000Z",
+      "end": "2026-04-27T07:45:00.000Z"
+    },
+    {
+      "id": "example-4",
+      "name": "Channel 1 Operation",
+      "type": "chanel-1",
+      "start": "2026-04-27T10:10:00.000Z",
+      "end": "2026-04-27T10:42:43.500Z"
+    },
+    {
+      "id": "example-5",
+      "name": "Channel 2 Observation",
+      "type": "chanel-2",
+      "start": "2026-04-27T11:15:27.000Z",
+      "end": "2026-04-27T12:15:27.000Z"
+    },
+    {
+      "id": "example-6",
+      "name": "Channel 3 Sequence",
+      "type": "chanel-3",
+      "start": "2026-04-27T12:30:00.000Z",
+      "end": "2026-04-27T13:00:00.000Z"
+    }
+  ]
+}
 ]
 ```
 
@@ -84,70 +123,3 @@ Served on the configured port (default: 3000). Use a process manager or containe
 
 No additional configuration is required for basic usage.
 
-### Self-Hosted Node (with Nginx)
-
-Build and start the app:
-
-```bash
-npm run build
-npm start
-```
-
-Configure Nginx as reverse proxy:
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-Enable HTTPS (e.g. Let's Encrypt)
-
-### Docker (Container Deployment)
-
-```dockerfile
-# Build stage
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN npm install
-RUN npm run build
-
-# Production stage
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=builder /app ./
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-Run container:
-
-```bash
-docker build -t tigersx-dashboard .
-docker run -p 3000:3000 tigersx-dashboard
-```
-
-### Kubernetes / Cloud
-
-Deploy the container image to your cluster. Use:
-
-- Horizontal scaling for traffic  
-- Ingress controller for routing  
-- HTTPS termination  
-
-## Environment Variables
-
-Only required when integrating external services (e.g. API keys, backend endpoints).  
-
-The current implementation does not require a `.env` file for basic operation.
