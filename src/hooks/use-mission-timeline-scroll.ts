@@ -14,8 +14,8 @@ import {
   timelineTrackWidthPx,
 } from "@/lib/mission-timeline";
 
-const ZOOM_MIN = 0.35;
-const ZOOM_MAX = 10;
+const ZOOM_MIN = 0.08;
+const ZOOM_MAX = 40;
 const ZOOM_STEP = 1.12;
 
 function clampZoom(z: number) {
@@ -29,7 +29,7 @@ export type MissionTimelineScrollOptions = {
 };
 
 export function useMissionTimelineScroll(
-  epochMs: number,
+  timelineStartMs: number,
   spanHours: number,
   { nowMs, enableInitialScrollToNow = false }: MissionTimelineScrollOptions,
 ) {
@@ -71,7 +71,7 @@ export function useMissionTimelineScroll(
       }
       const pxPerMs0 = pxPerMsFromZoom(z0);
       const focalMs =
-        epochMs + (el.scrollLeft + el.clientWidth / 2) / pxPerMs0;
+        timelineStartMs + (el.scrollLeft + el.clientWidth / 2) / pxPerMs0;
 
       wheelProbeRef.current = { focalMs, z0, z1 };
       setZoom(z1);
@@ -79,7 +79,7 @@ export function useMissionTimelineScroll(
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [epochMs]);
+  }, [timelineStartMs]);
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -91,7 +91,7 @@ export function useMissionTimelineScroll(
       spanHours,
       pxPerHour,
       nowMs,
-      epochMs,
+      timelineStartMs,
       pxPerMs,
     });
 
@@ -99,7 +99,7 @@ export function useMissionTimelineScroll(
       const pxPerMs1 = pxPerMsFromZoom(zoom);
       const maxScrollLeft = Math.max(0, trackWidthPx - el.clientWidth);
       const nextScrollLeft =
-        (probe.focalMs - epochMs) * pxPerMs1 - el.clientWidth / 2;
+        (probe.focalMs - timelineStartMs) * pxPerMs1 - el.clientWidth / 2;
       el.scrollLeft = Math.max(
         0,
         Math.min(nextScrollLeft, maxScrollLeft),
@@ -109,13 +109,13 @@ export function useMissionTimelineScroll(
     }
 
     zoomRef.current = zoom;
-  }, [zoom, spanHours, epochMs, nowMs]);
+  }, [zoom, spanHours, timelineStartMs, nowMs]);
 
   useLayoutEffect(() => {
     if (!enableInitialScrollToNow || initialScrollDoneRef.current) return;
     const el = scrollRef.current;
     if (!el) return;
-    if (nowMs === epochMs) return;
+    if (nowMs === timelineStartMs) return;
 
     const pxPerHour = BASE_PX_PER_HOUR * zoom;
     const pxPerMs = pxPerMsFromZoom(zoom);
@@ -123,18 +123,18 @@ export function useMissionTimelineScroll(
       spanHours,
       pxPerHour,
       nowMs,
-      epochMs,
+      timelineStartMs,
       pxPerMs,
     });
     const maxScrollLeft = Math.max(0, trackWidthPx - el.clientWidth);
     const nextScrollLeft =
-      (nowMs - epochMs) * pxPerMs - el.clientWidth / 2;
+      (nowMs - timelineStartMs) * pxPerMs - el.clientWidth / 2;
     el.scrollLeft = Math.max(0, Math.min(nextScrollLeft, maxScrollLeft));
     initialScrollDoneRef.current = true;
   }, [
     enableInitialScrollToNow,
     nowMs,
-    epochMs,
+    timelineStartMs,
     spanHours,
     zoom,
   ]);

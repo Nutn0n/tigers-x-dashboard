@@ -17,6 +17,12 @@ export type TimelineEvent = {
   end: string;
 };
 
+export type TimelineEventLayout = {
+  event: TimelineEvent;
+  lane: number;
+  laneCount: number;
+};
+
 export const BASE_PX_PER_HOUR = 72;
 export const TICK_STEP_HOURS = 6;
 export const MIN_TIMELINE_SPAN_HOURS = 96;
@@ -54,13 +60,30 @@ function hoursSinceEpoch(epochMs: number, tMs: number) {
   return (tMs - epochMs) / MS_PER_HOUR;
 }
 
-export function computeSpanHours(epochMs: number, events: TimelineEvent[]) {
+function parseFiniteMs(iso: string): number | null {
+  const ms = Date.parse(iso);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function computeTimelineStartMs(
+  epochMs: number,
+  events: TimelineEvent[],
+): number {
+  let minStartMs = epochMs;
+  for (const e of events) {
+    const startMs = parseFiniteMs(e.start);
+    if (startMs === null) continue;
+    minStartMs = Math.min(minStartMs, startMs);
+  }
+  return minStartMs;
+}
+
+export function computeSpanHours(timelineStartMs: number, events: TimelineEvent[]) {
   let maxEndH = 0;
   for (const e of events) {
-    const endMs = Date.parse(e.end);
-    if (Number.isFinite(endMs)) {
-      maxEndH = Math.max(maxEndH, hoursSinceEpoch(epochMs, endMs));
-    }
+    const endMs = parseFiniteMs(e.end);
+    if (endMs === null) continue;
+    maxEndH = Math.max(maxEndH, hoursSinceEpoch(timelineStartMs, endMs));
   }
   return Math.max(
     MIN_TIMELINE_SPAN_HOURS,
@@ -73,12 +96,12 @@ export function pxPerMsFromZoom(zoom: number) {
 }
 
 export function barLeftWidthPx(
-  epochMs: number,
+  timelineStartMs: number,
   startMs: number,
   endMs: number,
   pxPerMs: number,
 ) {
-  const left = (startMs - epochMs) * pxPerMs;
+  const left = (startMs - timelineStartMs) * pxPerMs;
   const width = (endMs - startMs) * pxPerMs;
   return { left, width: Math.max(width, 6) };
 }
@@ -137,6 +160,71 @@ export function bucketEventsByRow(
     byRow[rowType].push(ev);
   }
   return byRow;
+}
+
+/**
+ * Assign non-overlapping vertical lanes per row for simultaneous events.
+ * Events with invalid ranges are ignored.
+ */
+export function layoutEventsByRow(
+  eventsByRow: Record<RowType, TimelineEvent[]>,
+): Record<RowType, TimelineEventLayout[]> {
+  const out = {} as Record<RowType, TimelineEventLayout[]>;
+
+  for (const row of ROW_CONFIG) {
+    const rowType = row.type;
+    const source = eventsByRow[rowType];
+
+    const valid = source
+      .map((event, originalIndex) => {
+        const startMs = Date.parse(event.start);
+        const endMs = Date.parse(event.end);
+        return { event, startMs, endMs, originalIndex };
+      })
+      .filter(
+        (x) =>
+          Number.isFinite(x.startMs) &&
+          Number.isFinite(x.endMs) &&
+          x.endMs > x.startMs,
+      )
+      .sort((a, b) => {
+        if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+        if (a.endMs !== b.endMs) return a.endMs - b.endMs;
+        return a.originalIndex - b.originalIndex;
+      });
+
+    const laneEndMs: number[] = [];
+    const assigned: Array<{
+      event: TimelineEvent;
+      lane: number;
+      order: number;
+    }> = [];
+
+    for (let order = 0; order < valid.length; order++) {
+      const item = valid[order];
+      let lane = -1;
+      for (let i = 0; i < laneEndMs.length; i++) {
+        if (laneEndMs[i] <= item.startMs) {
+          lane = i;
+          break;
+        }
+      }
+      if (lane === -1) {
+        lane = laneEndMs.length;
+        laneEndMs.push(item.endMs);
+      } else {
+        laneEndMs[lane] = item.endMs;
+      }
+      assigned.push({ event: item.event, lane, order });
+    }
+
+    const laneCount = Math.max(1, laneEndMs.length);
+    out[rowType] = assigned
+      .sort((a, b) => a.order - b.order)
+      .map((x) => ({ event: x.event, lane: x.lane, laneCount }));
+  }
+
+  return out;
 }
 
 const CHANEL_ROW_TYPES = ["chanel-1", "chanel-2", "chanel-3"] as const;
@@ -287,31 +375,32 @@ export function findNextStationTimelineEvent(
 
 export function formatOffsetFromEpoch(epochMs: number, tMs: number) {
   let diffSec = Math.floor((tMs - epochMs) / 1000);
-  if (diffSec < 0) diffSec = 0;
+  const sign = diffSec < 0 ? "-" : "+";
+  diffSec = Math.abs(diffSec);
   const days = Math.floor(diffSec / 86400);
   const rem = diffSec % 86400;
   const h = Math.floor(rem / 3600);
   const m = Math.floor((rem % 3600) / 60);
-  return `+${String(days).padStart(3, "0")}:${pad2(h)}:${pad2(m)}`;
+  return `${sign}${String(days).padStart(3, "0")}:${pad2(h)}:${pad2(m)}`;
 }
 
 export function nowLineLeftPx(
   nowMs: number,
-  epochMs: number,
+  timelineStartMs: number,
   pxPerMs: number,
 ) {
-  return (nowMs - epochMs) * pxPerMs;
+  return (nowMs - timelineStartMs) * pxPerMs;
 }
 
 export function timelineTrackWidthPx(opts: {
   spanHours: number;
   pxPerHour: number;
   nowMs: number;
-  epochMs: number;
+  timelineStartMs: number;
   pxPerMs: number;
 }): number {
-  const { spanHours, pxPerHour, nowMs, epochMs } = opts;
-  const nowH = Math.max(0, (nowMs - epochMs) / MS_PER_HOUR);
+  const { spanHours, pxPerHour, nowMs, timelineStartMs } = opts;
+  const nowH = Math.max(0, (nowMs - timelineStartMs) / MS_PER_HOUR);
   const endH = Math.max(spanHours, nowH);
   return endH * pxPerHour;
 }

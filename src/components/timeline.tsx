@@ -11,10 +11,12 @@ import {
   barFillBackgroundStyle,
   barLeftWidthPx,
   bucketEventsByRow,
+  computeTimelineStartMs,
   computeSpanHours,
   emptyEventsByRow,
   formatOffsetFromEpoch,
   isOutlineOnlyLane,
+  layoutEventsByRow,
   MS_PER_HOUR,
   MIN_TIMELINE_SPAN_HOURS,
   nowLineLeftPx,
@@ -22,6 +24,7 @@ import {
   ROW_CONFIG,
   TICK_STEP_HOURS,
   timelineTrackWidthPx,
+  type TimelineEventLayout,
   type RowType,
   type TimelineEvent,
 } from "@/lib/mission-timeline";
@@ -34,6 +37,10 @@ const FILLED_BAR_PLAIN_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded text-left";
 const OUTLINE_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-white bg-transparent text-left";
+
+const EVENT_LANE_HEIGHT_PX = 22;
+const EVENT_LANE_GAP_PX = 4;
+const EVENT_ROW_VERTICAL_PADDING_PX = 4;
 
 type TimelineEventTooltipPayload = {
   id: string;
@@ -84,14 +91,16 @@ function TimelineEventHoverTooltip({
 function TimelineEventBar({
   rowType,
   ev,
-  epochMs,
+  layout,
+  timelineStartMs,
   pxPerMs,
   zoom,
   onHoverChange,
 }: {
   rowType: RowType;
   ev: TimelineEvent;
-  epochMs: number;
+  layout: TimelineEventLayout;
+  timelineStartMs: number;
   pxPerMs: number;
   zoom: number;
   onHoverChange?: (payload: TimelineEventTooltipPayload | null) => void;
@@ -119,7 +128,7 @@ function TimelineEventBar({
   const startText = formatBangkokDdMmYyHhMmSs(new Date(startMs));
   const endText = formatBangkokDdMmYyHhMmSs(new Date(endMs));
   const { left, width } = barLeftWidthPx(
-    epochMs,
+    timelineStartMs,
     startMs,
     endMs,
     pxPerMs,
@@ -133,10 +142,17 @@ function TimelineEventBar({
       ? FILLED_BAR_PLAIN_CLASS
       : FILLED_BAR_CLASS;
 
+  const barTop =
+    EVENT_ROW_VERTICAL_PADDING_PX +
+    layout.lane * (EVENT_LANE_HEIGHT_PX + EVENT_LANE_GAP_PX);
+
   return (
     <div
       className={barClassName}
       style={{
+        top: barTop,
+        bottom: "auto",
+        height: EVENT_LANE_HEIGHT_PX,
         left,
         width,
         ...(outline
@@ -183,8 +199,11 @@ export function Timeline() {
     useState<TimelineEventTooltipPayload | null>(null);
 
   const epochOk = Number.isFinite(epochMs) && epochMs > 0;
+  const timelineStartMs = epochOk
+    ? computeTimelineStartMs(epochMs, events)
+    : epochMs;
   const spanHours = epochOk
-    ? computeSpanHours(epochMs, events)
+    ? computeSpanHours(timelineStartMs, events)
     : MIN_TIMELINE_SPAN_HOURS;
 
   useEffect(() => {
@@ -200,7 +219,7 @@ export function Timeline() {
     onPointerUp,
     onPointerCancel,
     onLostPointerCapture,
-  } = useMissionTimelineScroll(epochMs, spanHours, {
+  } = useMissionTimelineScroll(timelineStartMs, spanHours, {
     nowMs,
     enableInitialScrollToNow: epochOk,
   });
@@ -239,14 +258,15 @@ export function Timeline() {
   const eventsByRow = epochOk
     ? bucketEventsByRow(events)
     : emptyEventsByRow();
+  const rowEventLayouts = layoutEventsByRow(eventsByRow);
   const trackWidthPx = timelineTrackWidthPx({
     spanHours,
     pxPerHour,
     nowMs,
-    epochMs,
+    timelineStartMs,
     pxPerMs,
   });
-  const nowLeftPx = nowLineLeftPx(nowMs, epochMs, pxPerMs);
+  const nowLeftPx = nowLineLeftPx(nowMs, timelineStartMs, pxPerMs);
 
   return (
     <FullscreenPanel className="flex flex-col">
@@ -310,7 +330,7 @@ export function Timeline() {
                       const hour = i * TICK_STEP_HOURS;
                       if (hour > spanHours) return null;
                       const left = hour * pxPerHour;
-                      const tickMs = epochMs + hour * MS_PER_HOUR;
+                      const tickMs = timelineStartMs + hour * MS_PER_HOUR;
                       const tickColumnWidth = Math.max(
                         1,
                         Math.min(tickStepPx, trackWidthPx - left),
@@ -343,24 +363,35 @@ export function Timeline() {
                   </div>
 
                   <div className="flex min-h-0 flex-1 flex-col">
-                    {ROW_CONFIG.map((row) => (
-                      <div
-                        key={row.type}
-                        className="relative min-h-0 flex-1 border-t border-solid border-[#eee]/12 bg-[#050505] first:border-t-0"
-                      >
-                        {eventsByRow[row.type].map((ev) => (
-                          <TimelineEventBar
-                            key={ev.id}
-                            rowType={row.type}
-                            ev={ev}
-                            epochMs={epochMs}
-                            pxPerMs={pxPerMs}
-                            zoom={zoom}
-                            onHoverChange={setEventTooltip}
-                          />
-                        ))}
-                      </div>
-                    ))}
+                    {ROW_CONFIG.map((row) => {
+                      const layouts = rowEventLayouts[row.type];
+                      const laneCount =
+                        layouts.length > 0 ? layouts[0].laneCount : 1;
+                      const rowHeight =
+                        EVENT_ROW_VERTICAL_PADDING_PX * 2 +
+                        laneCount * EVENT_LANE_HEIGHT_PX +
+                        Math.max(0, laneCount - 1) * EVENT_LANE_GAP_PX;
+                      return (
+                        <div
+                          key={row.type}
+                          className="relative min-h-0 flex-1 border-t border-solid border-[#eee]/12 bg-[#050505] first:border-t-0"
+                          style={{ minHeight: rowHeight }}
+                        >
+                          {layouts.map((layout) => (
+                            <TimelineEventBar
+                              key={layout.event.id}
+                              rowType={row.type}
+                              ev={layout.event}
+                              layout={layout}
+                              timelineStartMs={timelineStartMs}
+                              pxPerMs={pxPerMs}
+                              zoom={zoom}
+                              onHoverChange={setEventTooltip}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {nowLeftPx >= 0 && (
