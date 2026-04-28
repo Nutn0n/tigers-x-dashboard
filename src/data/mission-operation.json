@@ -6,6 +6,13 @@
   },
   "events": [
     {
+      "id": "spx-34-launch",
+      "name": "SpX-34 Launch",
+      "type": "iss-event",
+      "start": "2026-04-13T00:00:00.000Z",
+      "end": "2026-05-13T09:00:00.000Z"
+    },
+    {
       "id": "dock-ng24",
       "name": "Dock NG-24",
       "type": "iss-event",
@@ -34,8 +41,8 @@
       "end": "2026-04-28T00:01:05.000Z"
     },
     {
-      "id": "dock-spx",
-      "name": "Dock SpaceX",
+      "id": "spx-34-dock",
+      "name": "SpX-34 Dock",
       "type": "iss-event",
       "start": "2026-05-13T09:00:00.000Z",
       "end": "2026-05-13T09:00:05.000Z"
