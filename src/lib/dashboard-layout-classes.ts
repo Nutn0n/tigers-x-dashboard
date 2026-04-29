@@ -1,6 +1,6 @@
 /** Outer page shell for mission control views. */
 export const DASHBOARD_PAGE_SHELL =
-  "min-h-screen bg-[#000] text-[#eee]";
+  "min-h-screen bg-[#000] pb-8 text-[#eee] md:pb-12";
 
 /** Constrained content width under the top bar. */
 export const DASHBOARD_CONTENT_MAX =
