@@ -1,7 +1,4 @@
-import demoJson from "@/data/demo.json";
 import missionOperationJson from "@/data/mission-operation.json";
-
-export type MissionDataSourceMode = "mission" | "demo";
 
 export type MissionTimelineData = {
   mission: {
@@ -18,18 +15,7 @@ export type MissionTimelineData = {
   }>;
 };
 
-export const missionDataSources: Record<MissionDataSourceMode, MissionTimelineData> =
-  {
-    mission: missionOperationJson as MissionTimelineData,
-    demo: demoJson as MissionTimelineData,
-  };
-
-export const defaultMissionDataSourceMode: MissionDataSourceMode = "mission";
-export const missionDataSourceStorageKey = "dashboard-mission-data-source";
-
-export function missionDataForMode(mode: MissionDataSourceMode): MissionTimelineData {
-  return missionDataSources[mode];
-}
+export const missionTimelineData = missionOperationJson as MissionTimelineData;
 
 export const apiPaths = {
   iss: "/api/iss",
