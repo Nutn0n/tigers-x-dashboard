@@ -4,6 +4,7 @@ export const ROW_CONFIG = [
   { label: "Chanel 1", type: "chanel-1" },
   { label: "Chanel 2", type: "chanel-2" },
   { label: "Chanel 3", type: "chanel-3" },
+  { label: "Chanel 4", type: "chanel-4" },
   { label: "Operation", type: "operation" },
 ] as const;
 
@@ -115,7 +116,8 @@ function barFillForRowType(rowType: RowType): string {
   if (
     rowType === "chanel-1" ||
     rowType === "chanel-2" ||
-    rowType === "chanel-3"
+    rowType === "chanel-3" ||
+    rowType === "chanel-4"
   ) {
     return CHANEL_ORANGE;
   }
@@ -130,7 +132,8 @@ export function barFillBackgroundStyle(rowType: RowType): {
   if (
     rowType === "chanel-1" ||
     rowType === "chanel-2" ||
-    rowType === "chanel-3"
+    rowType === "chanel-3" ||
+    rowType === "chanel-4"
   ) {
     return { backgroundImage: CHANEL_ROW_VERTICAL_GRADIENT };
   }
@@ -227,10 +230,15 @@ export function layoutEventsByRow(
   return out;
 }
 
-const CHANEL_ROW_TYPES = ["chanel-1", "chanel-2", "chanel-3"] as const;
+const CHANEL_ROW_TYPES = [
+  "chanel-1",
+  "chanel-2",
+  "chanel-3",
+  "chanel-4",
+] as const;
 
 /**
- * Active chanel row only (chanel-1 → chanel-3 order). nowMs ∈ [start, end).
+ * Active chanel row only (chanel-1 → chanel-4 order). nowMs ∈ [start, end).
  */
 export function findCurrentChanelTimelineEvent(
   nowMs: number,
@@ -271,7 +279,8 @@ export function findNextChanelTimelineEvent(
     if (
       ev.type !== "chanel-1" &&
       ev.type !== "chanel-2" &&
-      ev.type !== "chanel-3"
+      ev.type !== "chanel-3" &&
+      ev.type !== "chanel-4"
     ) {
       continue;
     }
@@ -306,28 +315,51 @@ export function findNextChanelTimelineEvent(
 const STATION_ROW_TYPES = ["iss-event", "col-mpcc"] as const;
 
 /**
- * Active ISS or COL/MPCC event only (ISS row checked before COL/MPCC on overlap).
+ * Active ISS or COL/MPCC window containing `nowMs`. When multiple overlap (e.g.
+ * short ISS window inside a longer COL/MPCC block), picks the **latest start**
+ * so the UI matches the innermost / most recently begun station activity; ties
+ * on equal start prefer ISS over COL/MPCC, then earlier file order.
  */
 export function findCurrentStationTimelineEvent(
   nowMs: number,
   events: TimelineEvent[],
 ): TimelineEvent | null {
-  for (const rowType of STATION_ROW_TYPES) {
-    for (const ev of events) {
-      if (ev.type !== rowType) continue;
-      const startMs = Date.parse(ev.start);
-      const endMs = Date.parse(ev.end);
-      if (
-        !Number.isFinite(startMs) ||
-        !Number.isFinite(endMs) ||
-        endMs <= startMs
-      ) {
-        continue;
-      }
-      if (nowMs >= startMs && nowMs < endMs) return ev;
+  let best: {
+    ev: TimelineEvent;
+    startMs: number;
+    rowIdx: number;
+    fileIdx: number;
+  } | null = null;
+
+  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
+    const ev = events[fileIdx];
+    if (ev.type !== "iss-event" && ev.type !== "col-mpcc") continue;
+    const rowIdx = rowIndexForType(ev.type);
+    if (rowIdx === null) continue;
+
+    const startMs = Date.parse(ev.start);
+    const endMs = Date.parse(ev.end);
+    if (
+      !Number.isFinite(startMs) ||
+      !Number.isFinite(endMs) ||
+      endMs <= startMs
+    ) {
+      continue;
+    }
+    if (nowMs < startMs || nowMs >= endMs) continue;
+
+    if (
+      !best ||
+      startMs > best.startMs ||
+      (startMs === best.startMs &&
+        (rowIdx < best.rowIdx ||
+          (rowIdx === best.rowIdx && fileIdx < best.fileIdx)))
+    ) {
+      best = { ev, startMs, rowIdx, fileIdx };
     }
   }
-  return null;
+
+  return best === null ? null : best.ev;
 }
 
 /** Next upcoming ISS or COL/MPCC event only. */

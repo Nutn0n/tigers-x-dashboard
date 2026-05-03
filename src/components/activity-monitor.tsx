@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMissionDataSource } from "@/components/data-source-provider";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
-import { formatHhMmSsFromDurationMs } from "@/lib/dashboard-time";
+import {
+  formatHhMmSsCountdownRemainingMs,
+  formatHhMmSsFromDurationMs,
+} from "@/lib/dashboard-time";
 import {
   findCurrentChanelTimelineEvent,
   findCurrentStationTimelineEvent,
@@ -94,7 +97,7 @@ export function ActivityMonitor() {
           Invalid mission epoch in timeline data.
         </p>
       ) : (
-        <div className="flex w-full min-w-0 flex-col text-left">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto text-left pr-1">
           <div className="w-full min-w-0">
             <p className="m-0 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
               Current activity
@@ -129,12 +132,12 @@ export function ActivityMonitor() {
                 className={TIMER_VALUE_CLASS}
                 aria-label={
                   next && countdownMs != null
-                    ? `Time until start -${formatHhMmSsFromDurationMs(countdownMs)}`
+                    ? `Time until start ${formatHhMmSsCountdownRemainingMs(countdownMs)}`
                     : undefined
                 }
               >
                 {next && countdownMs != null
-                  ? `-${formatHhMmSsFromDurationMs(countdownMs)}`
+                  ? formatHhMmSsCountdownRemainingMs(countdownMs)
                   : "—"}
               </span>
             </div>
@@ -155,14 +158,14 @@ export function ActivityMonitor() {
                   stationCurrent && stationElapsedMs != null
                     ? `Elapsed +${formatHhMmSsFromDurationMs(stationElapsedMs)}`
                     : stationNext && stationCountdownMs != null
-                      ? `Time until start -${formatHhMmSsFromDurationMs(stationCountdownMs)}`
+                      ? `Time until start ${formatHhMmSsCountdownRemainingMs(stationCountdownMs)}`
                       : undefined
                 }
               >
                 {stationCurrent && stationElapsedMs != null
                   ? `+${formatHhMmSsFromDurationMs(stationElapsedMs)}`
                   : stationNext && stationCountdownMs != null
-                    ? `-${formatHhMmSsFromDurationMs(stationCountdownMs)}`
+                    ? formatHhMmSsCountdownRemainingMs(stationCountdownMs)
                     : "—"}
               </span>
             </div>

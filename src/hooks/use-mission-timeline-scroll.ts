@@ -180,9 +180,27 @@ export function useMissionTimelineScroll(
     setDragPan(false);
   }, []);
 
+  const scrollToNow = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const pxPerHour = BASE_PX_PER_HOUR * zoomRef.current;
+    const pxPerMs = pxPerMsFromZoom(zoomRef.current);
+    const trackWidthPx = timelineTrackWidthPx({
+      spanHours,
+      pxPerHour,
+      nowMs,
+      timelineStartMs,
+      pxPerMs,
+    });
+    const maxScrollLeft = Math.max(0, trackWidthPx - el.clientWidth);
+    const nextScrollLeft = (nowMs - timelineStartMs) * pxPerMs - el.clientWidth / 2;
+    el.scrollLeft = Math.max(0, Math.min(nextScrollLeft, maxScrollLeft));
+  }, [nowMs, spanHours, timelineStartMs]);
+
   return {
     scrollRef,
     zoom,
+    scrollToNow,
     dragPan,
     onPointerDown,
     onPointerMove,

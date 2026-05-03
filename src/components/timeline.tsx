@@ -213,6 +213,7 @@ export function Timeline() {
   const {
     scrollRef,
     zoom,
+    scrollToNow,
     dragPan,
     onPointerDown,
     onPointerMove,
@@ -280,14 +281,24 @@ export function Timeline() {
         className="flex min-h-0 flex-1 flex-col rounded-[10px] border border-solid px-4 pt-1 sm:px-6 md:px-10"
         aria-label="Mission timeline"
       >
-        <h2 className={DASHBOARD_PANEL_TITLE_CLASS}>Mission timeline</h2>
+        <div className="mb-1 flex items-center gap-3">
+          <button
+            type="button"
+            className="mt-[10px] shrink-0 rounded border border-solid border-[#eee]/30 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-[#eee]/80 transition hover:border-[#eee]/55 hover:text-[#eee] sm:text-xs"
+            onClick={scrollToNow}
+            disabled={!epochOk}
+          >
+            Jump to now
+          </button>
+          <h2 className={DASHBOARD_PANEL_TITLE_CLASS}>Mission timeline</h2>
+        </div>
 
         {!epochOk ? (
           <p className="m-0 flex-1 text-center text-sm text-[#eee]/60">
             Invalid mission epoch in timeline data.
           </p>
         ) : (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 pb-2 pt-1">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-y-auto pb-2 pt-1">
             <div className="flex min-h-0 min-w-0 flex-1 flex-row gap-2">
               <div
                 className="flex w-[7.5rem] shrink-0 flex-col border-solid border-[#eee]/20 pr-2 pt-9 sm:w-36"

@@ -1,14 +1,14 @@
 {
   "mission": {
-    "id": "iss-optimis",
-    "name": "ISS OPTIMIS Timeline",
+    "id": "tigers-x",
+    "name": "TIGERS-X",
     "epoch": "2026-05-12T23:00:00.000Z"
   },
   "events": [
     {
       "id": "spx-34-launch",
       "name": "SpX-34 Launch",
-      "type": "iss-event",
+      "type": "operation",
       "start": "2026-05-12T23:00:00.000Z",
       "end": "2026-05-13T09:00:00.000Z"
     },
