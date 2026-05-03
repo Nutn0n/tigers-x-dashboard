@@ -311,7 +311,7 @@ export function DashboardTopBar() {
   const losActive = false;
 
   return (
-    <div className="w-full">
+    <div className="w-full shrink-0">
       <div
         id="dashboard-top-bar-main"
         className={topBarCollapsed ? "hidden" : "block"}

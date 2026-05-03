@@ -29,7 +29,38 @@
   }
 }
 
+/** Slower than Tailwind `animate-ping` for ISS payload marker ring. */
+@keyframes iss-payload-ping-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  75%,
+  100% {
+    transform: scale(2.35);
+    opacity: 0;
+  }
+}
+
+@layer utilities {
+  .animate-iss-payload-ping-ring {
+    animation: iss-payload-ping-ring 3.25s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-iss-payload-ping-ring {
+      animation: none;
+      opacity: 0;
+    }
+  }
+}
+
+html {
+  overflow: hidden;
+}
+
 body {
+  overflow: hidden;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;

@@ -82,7 +82,7 @@ export function FullscreenPanel({
   }, [expanded, close]);
 
   const rootCollapsed =
-    `relative z-0 min-w-0 w-full ${collapseMinHeightClass} ${className}`.trim();
+    `relative isolate z-0 min-h-0 min-w-0 w-full overflow-hidden ${collapseMinHeightClass} ${className}`.trim();
   const rootExpanded =
     `fixed inset-0 z-[200] flex w-full flex-col overflow-auto bg-[#000] p-4 pt-14 text-[#eee] ${className}`.trim();
 
@@ -111,7 +111,7 @@ export function FullscreenPanel({
         className={
           expanded
             ? "flex min-h-0 min-w-0 w-full flex-1 flex-col self-stretch overflow-auto"
-            : "flex min-h-0 min-w-0 w-full flex-1 flex-col self-stretch"
+            : "flex min-h-0 min-w-0 w-full flex-1 flex-col self-stretch overflow-hidden"
         }
       >
         {children}

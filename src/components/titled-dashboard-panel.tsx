@@ -62,8 +62,8 @@ export function TitledDashboardPanel({
           <div
             className={
               contentFlush
-                ? "mt-3 flex min-h-0 w-full min-w-0 flex-1 flex-col justify-center overflow-hidden px-0 pb-3"
-                : "mt-3 flex min-h-0 w-full min-w-0 flex-1 flex-col justify-center overflow-hidden px-1 pb-3"
+                ? "mt-3 flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto px-0 pb-3"
+                : "mt-3 flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto px-1 pb-3"
             }
           >
             {children}

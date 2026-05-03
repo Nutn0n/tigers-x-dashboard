@@ -21,6 +21,26 @@ export function formatHhMmSsFromDurationMs(durationMs: number) {
   return `${String(h).padStart(2, "0")}:${pad2(m)}:${pad2(s)}`;
 }
 
+/**
+ * Remaining time until an instant. Uses ceil so fractional seconds never show
+ * shorter than reality.
+ * - **≥ 1 full day**: `-DDD:HH:MM:SS` (3-digit days, remainder clock on last partial day).
+ * - **Under 1 full day**: `HH:MM:SS` only (hours 00–23).
+ */
+export function formatHhMmSsCountdownRemainingMs(durationMs: number) {
+  let sec = Math.ceil(Math.max(0, durationMs) / 1000);
+  const days = Math.floor(sec / 86400);
+  sec %= 86400;
+  const h = Math.floor(sec / 3600);
+  sec %= 3600;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (days >= 1) {
+    return `-${pad3(days)}:${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+  }
+  return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+}
+
 /** `ddd:hh:mm:ss` from a non-negative whole-second duration. */
 function formatDddHhMmSs(totalSeconds: number) {
   const days = Math.floor(totalSeconds / 86400);
