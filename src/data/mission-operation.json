@@ -8,14 +8,14 @@
     {
       "id": "spx-34-launch",
       "name": "SpX-34 Launch",
-      "type": "operation",
+      "type": "iss-event",
       "start": "2026-05-15T22:05:00.000Z",
       "end": "2026-05-15T22:14:22.000Z"
     },
     {
       "id": "spx-34-dock",
       "name": "SpX-34 Dock",
-      "type": "operation",
+      "type": "iss-event",
       "start": "2026-05-17T11:00:00.000Z",
       "end": "2026-05-17T11:00:01.000Z"
     }
