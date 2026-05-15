@@ -1,4 +1,5 @@
 import missionOperationJson from "@/data/mission-operation.json";
+import type { TimelineEvent } from "@/lib/mission-timeline";
 
 export type MissionTimelineData = {
   mission: {
@@ -6,14 +7,7 @@ export type MissionTimelineData = {
     name: string;
     epoch: string;
   };
-  events: Array<{
-    id?: string;
-    name?: string;
-    type?: string;
-    start?: string;
-    end?: string;
-    description?: string;
-  }>;
+  events: TimelineEvent[];
 };
 
 export const missionTimelineData = missionOperationJson as MissionTimelineData;

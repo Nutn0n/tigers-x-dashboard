@@ -14,3 +14,21 @@ export const DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS =
 
 export const DASHBOARD_SCHEMATIC_IMAGE_CLASS =
   "block h-auto w-full object-contain";
+
+export const DASHBOARD_PANEL_STACK_CLASS =
+  "flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden";
+
+export const DASHBOARD_PANEL_SECTION_LABEL_CLASS =
+  "m-0 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs";
+
+export const DASHBOARD_PANEL_SECTION_DIVIDER_CLASS =
+  "mt-3 w-full shrink-0 border-t border-solid border-[color:var(--border)] pt-2";
+
+export const DASHBOARD_PANEL_MUTED_TEXT_CLASS =
+  "m-0 text-center text-sm text-[#eee]/60";
+
+export const DASHBOARD_ACTIVITY_DESCRIPTION_SHELL_CLASS =
+  "flex min-h-0 w-full min-w-0 flex-1 flex-col justify-center overflow-y-auto pr-1";
+
+export const DASHBOARD_NEXT_ACTIVITY_PILL_CLASS =
+  "mb-[10px] inline-flex w-fit shrink-0 rounded-full border border-solid border-[#eee]/35 bg-[#eee]/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#eee]/90 sm:text-xs";

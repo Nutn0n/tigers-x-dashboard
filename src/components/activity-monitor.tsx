@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useMissionDataSource } from "@/components/data-source-provider";
+import { useMemo } from "react";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import { useMissionTimelineEvents } from "@/hooks/use-mission-timeline-events";
+import { DASHBOARD_PANEL_MUTED_TEXT_CLASS } from "@/lib/dashboard-panel-styles";
 import {
   formatHhMmSsCountdownRemainingMs,
   formatHhMmSsFromDurationMs,
@@ -13,37 +14,13 @@ import {
   findNextChanelTimelineEvent,
   findNextStationTimelineEvent,
   missionDayNumberFromEpoch,
-  type TimelineEvent,
 } from "@/lib/mission-timeline";
 
 const TIMER_VALUE_CLASS =
   "shrink-0 font-mono text-xl font-semibold tabular-nums leading-none tracking-tight text-[#eee] sm:text-2xl";
 
 export function ActivityMonitor() {
-  const { timelineData } = useMissionDataSource();
-  const epochMs = Date.parse(timelineData.mission.epoch);
-  const events = timelineData.events as TimelineEvent[];
-
-  const [nowMs, setNowMs] = useState(() =>
-    Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0,
-  );
-
-  const epochOk = Number.isFinite(epochMs) && epochMs > 0;
-
-  useEffect(() => {
-    setNowMs(Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0);
-  }, [epochMs]);
-
-  useEffect(() => {
-    if (!epochOk) return;
-    const tick = () => setNowMs(Date.now());
-    const timeoutId = window.setTimeout(tick, 0);
-    const intervalId = window.setInterval(tick, 1000);
-    return () => {
-      window.clearTimeout(timeoutId);
-      window.clearInterval(intervalId);
-    };
-  }, [epochOk]);
+  const { epochMs, epochOk, nowMs, events } = useMissionTimelineEvents();
 
   const current = epochOk
     ? findCurrentChanelTimelineEvent(nowMs, events)
@@ -93,7 +70,7 @@ export function ActivityMonitor() {
   return (
     <TitledDashboardPanel title="Activity Monitor" panelId="activity-monitor">
       {!epochOk ? (
-        <p className="m-0 text-center text-sm text-[#eee]/60">
+        <p className={DASHBOARD_PANEL_MUTED_TEXT_CLASS}>
           Invalid mission epoch in timeline data.
         </p>
       ) : (

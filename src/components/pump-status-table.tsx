@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TelemetryBooleanChip } from "@/components/telemetry-boolean-chip";
+import { DASHBOARD_PANEL_SECTION_LABEL_CLASS } from "@/lib/dashboard-panel-styles";
 import type { TelemetrySnapshot } from "@/lib/telemetry";
 
 const PUMP_STATUS_KEYS = [
@@ -64,9 +65,7 @@ export function PumpStatusTable({
     <div
       className={`w-full shrink-0 ${flushTop ? "" : "border-t border-solid border-[color:var(--border)] pt-2 first:border-t-0 first:pt-0"}`}
     >
-      <p className="m-0 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
-        {caption}
-      </p>
+      <p className={DASHBOARD_PANEL_SECTION_LABEL_CLASS}>{caption}</p>
       <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">
         <tbody>
           {PUMP_ROWS.map((pair) => (

@@ -4,11 +4,12 @@ import { useState } from "react";
 import { PumpStatusTable } from "@/components/pump-status-table";
 import { TelemetryStringValueBox } from "@/components/telemetry-string-value-box";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import { DashboardSchematicImage } from "@/components/dashboard-schematic-image";
 import {
-  DASHBOARD_SCHEMATIC_IMAGE_CLASS,
-  DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS,
+  DASHBOARD_PANEL_SECTION_DIVIDER_CLASS,
+  DASHBOARD_PANEL_SECTION_LABEL_CLASS,
+  DASHBOARD_PANEL_STACK_CLASS,
 } from "@/lib/dashboard-panel-styles";
-import { withBasePath } from "@/lib/app-path";
 import type { TelemetrySnapshot } from "@/lib/telemetry";
 
 type MicrofludicTelemetryFields = Pick<
@@ -39,21 +40,16 @@ export function Microfludic() {
       panelId="microfludic"
       variant="tallStrip"
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden">
-        <div className={DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS}>
-          <img
-            src={withBasePath("/chip.svg")}
-            alt="Microfluidic chip diagram"
-            className={DASHBOARD_SCHEMATIC_IMAGE_CLASS}
-          />
-        </div>
+      <div className={DASHBOARD_PANEL_STACK_CLASS}>
+        <DashboardSchematicImage
+          src="/chip.svg"
+          alt="Microfluidic chip diagram"
+        />
 
         <PumpStatusTable caption="Pump status" flushTop />
 
-        <div className="mt-3 w-full shrink-0 border-t border-solid border-[color:var(--border)] pt-2">
-        <p className="m-0 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
-          Event & pump
-        </p>
+        <div className={DASHBOARD_PANEL_SECTION_DIVIDER_CLASS}>
+          <p className={DASHBOARD_PANEL_SECTION_LABEL_CLASS}>Event & pump</p>
         <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">
           <tbody>
             <tr className="border-t border-solid border-[#eee]/10 first:border-t-0">

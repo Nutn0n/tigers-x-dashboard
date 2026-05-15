@@ -322,6 +322,89 @@ export function findNextChanelTimelineEvent(
 }
 
 const STATION_ROW_TYPES = ["iss-event", "col-mpcc"] as const;
+const ISS_EVENT_TYPES = ["iss-event"] as const;
+
+type RankedTimelineEvent = {
+  ev: TimelineEvent;
+  startMs: number;
+  rowIdx: number;
+  fileIdx: number;
+};
+
+function eventTypeAllowed(type: string, allowed: readonly string[]): boolean {
+  return allowed.includes(type);
+}
+
+/**
+ * Active window for allowed types. When multiple overlap, picks the latest start;
+ * ties prefer lower row index, then earlier file order.
+ */
+function findCurrentEventForTypes(
+  nowMs: number,
+  events: TimelineEvent[],
+  allowedTypes: readonly string[],
+): TimelineEvent | null {
+  let best: RankedTimelineEvent | null = null;
+
+  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
+    const ev = events[fileIdx];
+    if (!eventTypeAllowed(ev.type, allowedTypes)) continue;
+
+    const rowIdx = rowIndexForType(ev.type);
+    if (rowIdx === null) continue;
+
+    const startMs = parseFiniteMs(ev.start);
+    const endMs = parseFiniteMs(ev.end);
+    if (startMs === null || endMs === null || endMs <= startMs) continue;
+    if (nowMs < startMs || nowMs >= endMs) continue;
+
+    if (
+      !best ||
+      startMs > best.startMs ||
+      (startMs === best.startMs &&
+        (rowIdx < best.rowIdx ||
+          (rowIdx === best.rowIdx && fileIdx < best.fileIdx)))
+    ) {
+      best = { ev, startMs, rowIdx, fileIdx };
+    }
+  }
+
+  return best?.ev ?? null;
+}
+
+/** Next upcoming event for allowed types (earliest start). */
+function findNextEventForTypes(
+  nowMs: number,
+  events: TimelineEvent[],
+  allowedTypes: readonly string[],
+): TimelineEvent | null {
+  let best: RankedTimelineEvent | null = null;
+
+  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
+    const ev = events[fileIdx];
+    if (!eventTypeAllowed(ev.type, allowedTypes)) continue;
+
+    const rowIdx = rowIndexForType(ev.type);
+    if (rowIdx === null) continue;
+
+    const startMs = parseFiniteMs(ev.start);
+    const endMs = parseFiniteMs(ev.end);
+    if (startMs === null || endMs === null || endMs <= startMs) continue;
+    if (startMs <= nowMs) continue;
+
+    if (
+      !best ||
+      startMs < best.startMs ||
+      (startMs === best.startMs &&
+        (rowIdx < best.rowIdx ||
+          (rowIdx === best.rowIdx && fileIdx < best.fileIdx)))
+    ) {
+      best = { ev, startMs, rowIdx, fileIdx };
+    }
+  }
+
+  return best?.ev ?? null;
+}
 
 /**
  * Active ISS or COL/MPCC window containing `nowMs`. When multiple overlap (e.g.
@@ -333,42 +416,7 @@ export function findCurrentStationTimelineEvent(
   nowMs: number,
   events: TimelineEvent[],
 ): TimelineEvent | null {
-  let best: {
-    ev: TimelineEvent;
-    startMs: number;
-    rowIdx: number;
-    fileIdx: number;
-  } | null = null;
-
-  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
-    const ev = events[fileIdx];
-    if (ev.type !== "iss-event" && ev.type !== "col-mpcc") continue;
-    const rowIdx = rowIndexForType(ev.type);
-    if (rowIdx === null) continue;
-
-    const startMs = Date.parse(ev.start);
-    const endMs = Date.parse(ev.end);
-    if (
-      !Number.isFinite(startMs) ||
-      !Number.isFinite(endMs) ||
-      endMs <= startMs
-    ) {
-      continue;
-    }
-    if (nowMs < startMs || nowMs >= endMs) continue;
-
-    if (
-      !best ||
-      startMs > best.startMs ||
-      (startMs === best.startMs &&
-        (rowIdx < best.rowIdx ||
-          (rowIdx === best.rowIdx && fileIdx < best.fileIdx)))
-    ) {
-      best = { ev, startMs, rowIdx, fileIdx };
-    }
-  }
-
-  return best === null ? null : best.ev;
+  return findCurrentEventForTypes(nowMs, events, STATION_ROW_TYPES);
 }
 
 /** Next upcoming ISS or COL/MPCC event only. */
@@ -376,42 +424,7 @@ export function findNextStationTimelineEvent(
   nowMs: number,
   events: TimelineEvent[],
 ): TimelineEvent | null {
-  let best: {
-    ev: TimelineEvent;
-    startMs: number;
-    rowIdx: number;
-    fileIdx: number;
-  } | null = null;
-
-  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
-    const ev = events[fileIdx];
-    if (ev.type !== "iss-event" && ev.type !== "col-mpcc") continue;
-    const rowIdx = rowIndexForType(ev.type);
-    if (rowIdx === null) continue;
-
-    const startMs = Date.parse(ev.start);
-    const endMs = Date.parse(ev.end);
-    if (
-      !Number.isFinite(startMs) ||
-      !Number.isFinite(endMs) ||
-      endMs <= startMs
-    ) {
-      continue;
-    }
-    if (startMs <= nowMs) continue;
-
-    if (
-      !best ||
-      startMs < best.startMs ||
-      (startMs === best.startMs &&
-        (rowIdx < best.rowIdx ||
-          (rowIdx === best.rowIdx && fileIdx < best.fileIdx)))
-    ) {
-      best = { ev, startMs, rowIdx, fileIdx };
-    }
-  }
-
-  return best === null ? null : best.ev;
+  return findNextEventForTypes(nowMs, events, STATION_ROW_TYPES);
 }
 
 /** Active ISS event window containing `nowMs` (iss-event row only). */
@@ -419,37 +432,7 @@ export function findCurrentIssTimelineEvent(
   nowMs: number,
   events: TimelineEvent[],
 ): TimelineEvent | null {
-  let best: {
-    ev: TimelineEvent;
-    startMs: number;
-    fileIdx: number;
-  } | null = null;
-
-  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
-    const ev = events[fileIdx];
-    if (ev.type !== "iss-event") continue;
-
-    const startMs = Date.parse(ev.start);
-    const endMs = Date.parse(ev.end);
-    if (
-      !Number.isFinite(startMs) ||
-      !Number.isFinite(endMs) ||
-      endMs <= startMs
-    ) {
-      continue;
-    }
-    if (nowMs < startMs || nowMs >= endMs) continue;
-
-    if (
-      !best ||
-      startMs > best.startMs ||
-      (startMs === best.startMs && fileIdx < best.fileIdx)
-    ) {
-      best = { ev, startMs, fileIdx };
-    }
-  }
-
-  return best === null ? null : best.ev;
+  return findCurrentEventForTypes(nowMs, events, ISS_EVENT_TYPES);
 }
 
 /** Next upcoming ISS event only (iss-event row). */
@@ -457,42 +440,22 @@ export function findNextIssTimelineEvent(
   nowMs: number,
   events: TimelineEvent[],
 ): TimelineEvent | null {
-  let best: {
-    ev: TimelineEvent;
-    startMs: number;
-    fileIdx: number;
-  } | null = null;
-
-  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
-    const ev = events[fileIdx];
-    if (ev.type !== "iss-event") continue;
-
-    const startMs = Date.parse(ev.start);
-    const endMs = Date.parse(ev.end);
-    if (
-      !Number.isFinite(startMs) ||
-      !Number.isFinite(endMs) ||
-      endMs <= startMs
-    ) {
-      continue;
-    }
-    if (startMs <= nowMs) continue;
-
-    if (
-      !best ||
-      startMs < best.startMs ||
-      (startMs === best.startMs && fileIdx < best.fileIdx)
-    ) {
-      best = { ev, startMs, fileIdx };
-    }
-  }
-
-  return best === null ? null : best.ev;
+  return findNextEventForTypes(nowMs, events, ISS_EVENT_TYPES);
 }
 
 function timelineEventStartMs(ev: TimelineEvent): number | null {
-  const startMs = Date.parse(ev.start);
-  return Number.isFinite(startMs) ? startMs : null;
+  return parseFiniteMs(ev.start);
+}
+
+function pickSoonerTimelineEvent(
+  a: TimelineEvent,
+  b: TimelineEvent,
+): TimelineEvent {
+  const aStart = timelineEventStartMs(a);
+  const bStart = timelineEventStartMs(b);
+  if (aStart == null) return b;
+  if (bStart == null) return a;
+  return bStart < aStart ? b : a;
 }
 
 /** Current chanel → current ISS → soonest next chanel/ISS (for Activity Description). */
@@ -513,21 +476,10 @@ export function resolveActivityDescriptionDisplay(
   const nextChanel = findNextChanelTimelineEvent(nowMs, events);
   const nextIss = findNextIssTimelineEvent(nowMs, events);
 
-  if (nextChanel && nextIss) {
-    const chanelStart = timelineEventStartMs(nextChanel);
-    const issStart = timelineEventStartMs(nextIss);
-    if (chanelStart != null && issStart != null) {
-      const sooner =
-        issStart < chanelStart
-          ? nextIss
-          : chanelStart < issStart
-            ? nextChanel
-            : nextChanel;
-      return { event: sooner, showNextPill: true };
-    }
-  }
-
-  const next = nextChanel ?? nextIss;
+  const next =
+    nextChanel && nextIss
+      ? pickSoonerTimelineEvent(nextChanel, nextIss)
+      : (nextChanel ?? nextIss);
   if (next) {
     return { event: next, showNextPill: true };
   }
