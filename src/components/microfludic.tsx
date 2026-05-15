@@ -4,6 +4,11 @@ import { useState } from "react";
 import { PumpStatusTable } from "@/components/pump-status-table";
 import { TelemetryStringValueBox } from "@/components/telemetry-string-value-box";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import {
+  DASHBOARD_SCHEMATIC_IMAGE_CLASS,
+  DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS,
+} from "@/lib/dashboard-panel-styles";
+import { withBasePath } from "@/lib/app-path";
 import type { TelemetrySnapshot } from "@/lib/telemetry";
 
 type MicrofludicTelemetryFields = Pick<
@@ -34,9 +39,18 @@ export function Microfludic() {
       panelId="microfludic"
       variant="tallStrip"
     >
-      <PumpStatusTable caption="Pump status" />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden">
+        <div className={DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS}>
+          <img
+            src={withBasePath("/chip.svg")}
+            alt="Microfluidic chip diagram"
+            className={DASHBOARD_SCHEMATIC_IMAGE_CLASS}
+          />
+        </div>
 
-      <div className="w-full shrink-0 border-t border-solid border-[color:var(--border)] pt-2">
+        <PumpStatusTable caption="Pump status" flushTop />
+
+        <div className="mt-3 w-full shrink-0 border-t border-solid border-[color:var(--border)] pt-2">
         <p className="m-0 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
           Event & pump
         </p>
@@ -100,6 +114,7 @@ export function Microfludic() {
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </TitledDashboardPanel>
   );

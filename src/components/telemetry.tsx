@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { TelemetryBooleanChip } from "@/components/telemetry-boolean-chip";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import {
+  DASHBOARD_SCHEMATIC_IMAGE_CLASS,
+  DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS,
+} from "@/lib/dashboard-panel-styles";
+import { withBasePath } from "@/lib/app-path";
 import type { TelemetrySnapshot } from "@/lib/telemetry";
 
 type TelemetryPanelFields = Pick<
@@ -22,7 +27,16 @@ export function Telemetry() {
 
   return (
     <TitledDashboardPanel title="Telemetry" panelId="telemetry">
-      <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden">
+        <div className={DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS}>
+          <img
+            src={withBasePath("/payload.svg")}
+            alt="Payload diagram"
+            className={DASHBOARD_SCHEMATIC_IMAGE_CLASS}
+          />
+        </div>
+
+        <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">
         <tbody>
           <tr className="border-t border-solid border-[#eee]/10 first:border-t-0">
             <th
@@ -74,6 +88,7 @@ export function Telemetry() {
           </tr>
         </tbody>
       </table>
+      </div>
     </TitledDashboardPanel>
   );
 }

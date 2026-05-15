@@ -10,14 +10,16 @@
       "name": "SpX-34 Launch",
       "type": "iss-event",
       "start": "2026-05-15T22:05:00.000Z",
-      "end": "2026-05-15T22:14:22.000Z"
+      "end": "2026-05-15T22:14:22.000Z",
+      "description": "SpaceX is targeting Friday, May 15, for Falcon 9’s launch of Dragon’s 34th Commercial Resupply Services (CRS-34) mission for NASA to the International Space Station from Space Launch Complex 40 (SLC-40) at Cape Canaveral Space Force Station in Florida. Liftoff is targeted for 6:05 p.m. ET."
     },
     {
       "id": "spx-34-dock",
       "name": "SpX-34 Dock",
       "type": "iss-event",
       "start": "2026-05-17T11:00:00.000Z",
-      "end": "2026-05-17T11:00:01.000Z"
+      "end": "2026-05-17T11:00:01.000Z",
+      "description": "After an approximate 36-hour flight, Dragon will autonomously dock with the orbiting laboratory on Sunday, May 17, at around 7:00 a.m. ET."
     }
   ]
 }

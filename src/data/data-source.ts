@@ -12,6 +12,7 @@ export type MissionTimelineData = {
     type?: string;
     start?: string;
     end?: string;
+    description?: string;
   }>;
 };
 

@@ -7,3 +7,10 @@ export const DASHBOARD_PANEL_SECTION_CLASS =
 
 export const DASHBOARD_PANEL_TITLE_CLASS =
   "m-0 w-full shrink-0 text-center text-xs font-medium uppercase tracking-wider text-[#eee]/80 sm:text-sm";
+
+/** Schematic SVG wrapper (chip, camera): full width up to 400px, centered in wide/fullscreen panels. */
+export const DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS =
+  "mx-auto w-full max-w-[400px] shrink-0 overflow-hidden";
+
+export const DASHBOARD_SCHEMATIC_IMAGE_CLASS =
+  "block h-auto w-full object-contain";

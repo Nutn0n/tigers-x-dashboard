@@ -50,13 +50,20 @@ const PUMP_ROWS = [
 type PumpStatusTableProps = {
   /** Section caption above the table (e.g. "Pump status"). */
   caption?: string;
+  /** No top border or padding (e.g. directly under a diagram). */
+  flushTop?: boolean;
 };
 
-export function PumpStatusTable({ caption = "Pump status" }: PumpStatusTableProps) {
+export function PumpStatusTable({
+  caption = "Pump status",
+  flushTop = false,
+}: PumpStatusTableProps) {
   const [pumpFlags] = useState<Record<PumpStatusKey, boolean>>(defaultPumpFlags);
 
   return (
-    <div className="w-full shrink-0 border-t border-solid border-[color:var(--border)] pt-2 first:border-t-0 first:pt-0">
+    <div
+      className={`w-full shrink-0 ${flushTop ? "" : "border-t border-solid border-[color:var(--border)] pt-2 first:border-t-0 first:pt-0"}`}
+    >
       <p className="m-0 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
         {caption}
       </p>

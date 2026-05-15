@@ -16,7 +16,16 @@ export type TimelineEvent = {
   type: string;
   start: string;
   end: string;
+  description?: string;
 };
+
+const DEFAULT_EVENT_DESCRIPTION =
+  "No description has been provided for this activity.";
+
+export function timelineEventDescription(event: TimelineEvent): string {
+  const text = event.description?.trim();
+  return text && text.length > 0 ? text : DEFAULT_EVENT_DESCRIPTION;
+}
 
 export type TimelineEventLayout = {
   event: TimelineEvent;
@@ -403,6 +412,127 @@ export function findNextStationTimelineEvent(
   }
 
   return best === null ? null : best.ev;
+}
+
+/** Active ISS event window containing `nowMs` (iss-event row only). */
+export function findCurrentIssTimelineEvent(
+  nowMs: number,
+  events: TimelineEvent[],
+): TimelineEvent | null {
+  let best: {
+    ev: TimelineEvent;
+    startMs: number;
+    fileIdx: number;
+  } | null = null;
+
+  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
+    const ev = events[fileIdx];
+    if (ev.type !== "iss-event") continue;
+
+    const startMs = Date.parse(ev.start);
+    const endMs = Date.parse(ev.end);
+    if (
+      !Number.isFinite(startMs) ||
+      !Number.isFinite(endMs) ||
+      endMs <= startMs
+    ) {
+      continue;
+    }
+    if (nowMs < startMs || nowMs >= endMs) continue;
+
+    if (
+      !best ||
+      startMs > best.startMs ||
+      (startMs === best.startMs && fileIdx < best.fileIdx)
+    ) {
+      best = { ev, startMs, fileIdx };
+    }
+  }
+
+  return best === null ? null : best.ev;
+}
+
+/** Next upcoming ISS event only (iss-event row). */
+export function findNextIssTimelineEvent(
+  nowMs: number,
+  events: TimelineEvent[],
+): TimelineEvent | null {
+  let best: {
+    ev: TimelineEvent;
+    startMs: number;
+    fileIdx: number;
+  } | null = null;
+
+  for (let fileIdx = 0; fileIdx < events.length; fileIdx++) {
+    const ev = events[fileIdx];
+    if (ev.type !== "iss-event") continue;
+
+    const startMs = Date.parse(ev.start);
+    const endMs = Date.parse(ev.end);
+    if (
+      !Number.isFinite(startMs) ||
+      !Number.isFinite(endMs) ||
+      endMs <= startMs
+    ) {
+      continue;
+    }
+    if (startMs <= nowMs) continue;
+
+    if (
+      !best ||
+      startMs < best.startMs ||
+      (startMs === best.startMs && fileIdx < best.fileIdx)
+    ) {
+      best = { ev, startMs, fileIdx };
+    }
+  }
+
+  return best === null ? null : best.ev;
+}
+
+function timelineEventStartMs(ev: TimelineEvent): number | null {
+  const startMs = Date.parse(ev.start);
+  return Number.isFinite(startMs) ? startMs : null;
+}
+
+/** Current chanel → current ISS → soonest next chanel/ISS (for Activity Description). */
+export function resolveActivityDescriptionDisplay(
+  nowMs: number,
+  events: TimelineEvent[],
+): { event: TimelineEvent; showNextPill: boolean } | null {
+  const currentChanel = findCurrentChanelTimelineEvent(nowMs, events);
+  if (currentChanel) {
+    return { event: currentChanel, showNextPill: false };
+  }
+
+  const currentIss = findCurrentIssTimelineEvent(nowMs, events);
+  if (currentIss) {
+    return { event: currentIss, showNextPill: false };
+  }
+
+  const nextChanel = findNextChanelTimelineEvent(nowMs, events);
+  const nextIss = findNextIssTimelineEvent(nowMs, events);
+
+  if (nextChanel && nextIss) {
+    const chanelStart = timelineEventStartMs(nextChanel);
+    const issStart = timelineEventStartMs(nextIss);
+    if (chanelStart != null && issStart != null) {
+      const sooner =
+        issStart < chanelStart
+          ? nextIss
+          : chanelStart < issStart
+            ? nextChanel
+            : nextChanel;
+      return { event: sooner, showNextPill: true };
+    }
+  }
+
+  const next = nextChanel ?? nextIss;
+  if (next) {
+    return { event: next, showNextPill: true };
+  }
+
+  return null;
 }
 
 export function formatOffsetFromEpoch(epochMs: number, tMs: number) {

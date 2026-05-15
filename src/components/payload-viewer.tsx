@@ -4,6 +4,10 @@ import { useState } from "react";
 import { TelemetryBooleanChip } from "@/components/telemetry-boolean-chip";
 import { TelemetryStringValueBox } from "@/components/telemetry-string-value-box";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
+import {
+  DASHBOARD_SCHEMATIC_IMAGE_CLASS,
+  DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS,
+} from "@/lib/dashboard-panel-styles";
 import { withBasePath } from "@/lib/app-path";
 import type { TelemetrySnapshot } from "@/lib/telemetry";
 
@@ -48,17 +52,17 @@ export function PayloadViewer() {
   const [payloadCapture] = useState<PayloadCaptureFields>(defaultPayloadCapture);
 
   return (
-    <TitledDashboardPanel title="Payload Viewer" panelId="payload-viewer">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
-        <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
+    <TitledDashboardPanel title="Imaging System" panelId="payload-viewer">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden">
+        <div className={DASHBOARD_SCHEMATIC_IMAGE_WRAPPER_CLASS}>
           <img
-            src={withBasePath("/payload.svg")}
-            alt="Payload diagram"
-            className="max-h-full max-w-full object-contain object-center"
+            src={withBasePath("/camera.svg")}
+            alt="Camera diagram"
+            className={DASHBOARD_SCHEMATIC_IMAGE_CLASS}
           />
         </div>
 
-        <div className="shrink-0 border-t border-solid border-[color:var(--border)] pt-2">
+        <div className="w-full shrink-0">
           <p className="m-0 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
             Camera status
           </p>
