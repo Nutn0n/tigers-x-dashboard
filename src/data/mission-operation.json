@@ -20,6 +20,38 @@
       "start": "2026-05-17T11:00:00.000Z",
       "end": "2026-05-17T11:00:01.000Z",
       "description": "After an approximate 36-hour flight, Dragon will autonomously dock with the orbiting laboratory on Sunday, May 17, at around 7:00 a.m. ET."
+    },
+    {
+      "id": "95p-reboost-1",
+      "name": "95P Reboost 1",
+      "type": "iss-event",
+      "start": "2026-05-21T12:48:00.000Z",
+      "end": "2026-05-21T12:50:00.000Z",
+      "description": "A planned orbital maneuver using the engines of the Progress 95 spacecraft to raise the International Space Station’s altitude and maintain its operational orbit."
+    },
+    {
+      "id": "installation",
+      "name": "Installation",
+      "type": "operation",
+      "start": "2026-05-26T22:15:00.000Z",
+      "end": "2026-05-26T23:00:00.000Z",
+      "description": "ISS crew members installed the TIGERS-X experiment module into the ICE Cubes Facility aboard the Columbus laboratory module and initiated initial system checkouts. Following installation, ground teams began verifying telemetry, power, communication links, and experiment status to prepare the payload for operational activities."
+    },
+    {
+      "id": "task-day-1",
+      "name": "Task Day 1",
+      "type": "operation",
+      "start": "2026-05-27T02:30:00.000Z",
+      "end": "2026-05-27T03:00:00.000Z",
+      "description": "The first day of TIGERS-X experiment operations began with real experiment runs on Channel 1 and Channel 3. Teams monitored payload performance, fluid behavior, telemetry, and command responses during the operational sequence."
+    },
+    {
+      "id": "task-day-2",
+      "name": "Task Day 2",
+      "type": "operation",
+      "start": "2026-05-28T02:30:00.000Z",
+      "end": "2026-05-28T03:10:00.000Z",
+      "description": "The second day of TIGERS-X experiment operations began with real experiment runs on Channel 2 and Channel 4. Teams monitored payload performance, fluid behavior, telemetry, and command responses during the operational sequence."
     }
   ]
 }

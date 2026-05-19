@@ -10,6 +10,19 @@ export const ROW_CONFIG = [
 
 export type RowType = (typeof ROW_CONFIG)[number]["type"];
 
+export const TDRSS_ROW_CONFIG = [
+  { label: "S Band", type: "tdrss-s", color: "#eee" },
+  { label: "KU Band", type: "tdrss-ku", color: "#fff" },
+] as const;
+
+export type TdrssRowType = (typeof TDRSS_ROW_CONFIG)[number]["type"];
+
+export type TimelineBarRowType = RowType | TdrssRowType;
+
+export function isTdrssRowType(rowType: string): rowType is TdrssRowType {
+  return rowType === "tdrss-s" || rowType === "tdrss-ku";
+}
+
 export type TimelineEvent = {
   id: string;
   name: string;
@@ -121,7 +134,14 @@ function rowIndexForType(t: string): number | null {
   return i >= 0 ? i : null;
 }
 
-function barFillForRowType(rowType: RowType): string {
+function tdrssRowColor(rowType: string): string | null {
+  const row = TDRSS_ROW_CONFIG.find((r) => r.type === rowType);
+  return row?.color ?? null;
+}
+
+function barFillForRowType(rowType: TimelineBarRowType): string {
+  const tdrssColor = tdrssRowColor(rowType);
+  if (tdrssColor) return tdrssColor;
   if (
     rowType === "chanel-1" ||
     rowType === "chanel-2" ||
@@ -134,10 +154,12 @@ function barFillForRowType(rowType: RowType): string {
 }
 
 /** Background for event bars (gradient on Chanel rows, flat fill elsewhere). */
-export function barFillBackgroundStyle(rowType: RowType): {
+export function barFillBackgroundStyle(rowType: TimelineBarRowType): {
   backgroundColor?: string;
   backgroundImage?: string;
 } {
+  const tdrssColor = tdrssRowColor(rowType);
+  if (tdrssColor) return { backgroundColor: tdrssColor };
   if (
     rowType === "chanel-1" ||
     rowType === "chanel-2" ||
@@ -149,8 +171,15 @@ export function barFillBackgroundStyle(rowType: RowType): {
   return { backgroundColor: barFillForRowType(rowType) };
 }
 
-export function isOutlineOnlyLane(rowType: RowType): boolean {
-  return rowType === "operation";
+export function isOutlineOnlyLane(_rowType: TimelineBarRowType): boolean {
+  return false;
+}
+
+export function mergeEventsForTimelineRange(
+  mission: TimelineEvent[],
+  tdrss: TimelineEvent[],
+): TimelineEvent[] {
+  return [...mission, ...tdrss];
 }
 
 export function emptyEventsByRow(): Record<RowType, TimelineEvent[]> {
@@ -175,68 +204,136 @@ export function bucketEventsByRow(
 }
 
 /**
- * Assign non-overlapping vertical lanes per row for simultaneous events.
+ * Assign non-overlapping vertical lanes for simultaneous events in one row.
  * Events with invalid ranges are ignored.
  */
+export function layoutEventsInRow(
+  source: TimelineEvent[],
+): TimelineEventLayout[] {
+  const valid = source
+    .map((event, originalIndex) => {
+      const startMs = Date.parse(event.start);
+      const endMs = Date.parse(event.end);
+      return { event, startMs, endMs, originalIndex };
+    })
+    .filter(
+      (x) =>
+        Number.isFinite(x.startMs) &&
+        Number.isFinite(x.endMs) &&
+        x.endMs > x.startMs,
+    )
+    .sort((a, b) => {
+      if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+      if (a.endMs !== b.endMs) return a.endMs - b.endMs;
+      return a.originalIndex - b.originalIndex;
+    });
+
+  const laneEndMs: number[] = [];
+  const assigned: Array<{
+    event: TimelineEvent;
+    lane: number;
+    order: number;
+  }> = [];
+
+  for (let order = 0; order < valid.length; order++) {
+    const item = valid[order];
+    let lane = -1;
+    for (let i = 0; i < laneEndMs.length; i++) {
+      if (laneEndMs[i] <= item.startMs) {
+        lane = i;
+        break;
+      }
+    }
+    if (lane === -1) {
+      lane = laneEndMs.length;
+      laneEndMs.push(item.endMs);
+    } else {
+      laneEndMs[lane] = item.endMs;
+    }
+    assigned.push({ event: item.event, lane, order });
+  }
+
+  const laneCount = Math.max(1, laneEndMs.length);
+  return assigned
+    .sort((a, b) => a.order - b.order)
+    .map((x) => ({ event: x.event, lane: x.lane, laneCount }));
+}
+
 export function layoutEventsByRow(
   eventsByRow: Record<RowType, TimelineEvent[]>,
 ): Record<RowType, TimelineEventLayout[]> {
   const out = {} as Record<RowType, TimelineEventLayout[]>;
 
   for (const row of ROW_CONFIG) {
-    const rowType = row.type;
-    const source = eventsByRow[rowType];
-
-    const valid = source
-      .map((event, originalIndex) => {
-        const startMs = Date.parse(event.start);
-        const endMs = Date.parse(event.end);
-        return { event, startMs, endMs, originalIndex };
-      })
-      .filter(
-        (x) =>
-          Number.isFinite(x.startMs) &&
-          Number.isFinite(x.endMs) &&
-          x.endMs > x.startMs,
-      )
-      .sort((a, b) => {
-        if (a.startMs !== b.startMs) return a.startMs - b.startMs;
-        if (a.endMs !== b.endMs) return a.endMs - b.endMs;
-        return a.originalIndex - b.originalIndex;
-      });
-
-    const laneEndMs: number[] = [];
-    const assigned: Array<{
-      event: TimelineEvent;
-      lane: number;
-      order: number;
-    }> = [];
-
-    for (let order = 0; order < valid.length; order++) {
-      const item = valid[order];
-      let lane = -1;
-      for (let i = 0; i < laneEndMs.length; i++) {
-        if (laneEndMs[i] <= item.startMs) {
-          lane = i;
-          break;
-        }
-      }
-      if (lane === -1) {
-        lane = laneEndMs.length;
-        laneEndMs.push(item.endMs);
-      } else {
-        laneEndMs[lane] = item.endMs;
-      }
-      assigned.push({ event: item.event, lane, order });
-    }
-
-    const laneCount = Math.max(1, laneEndMs.length);
-    out[rowType] = assigned
-      .sort((a, b) => a.order - b.order)
-      .map((x) => ({ event: x.event, lane: x.lane, laneCount }));
+    out[row.type] = layoutEventsInRow(eventsByRow[row.type]);
   }
 
   return out;
+}
+
+export function emptyTdrssEventsByRow(): Record<TdrssRowType, TimelineEvent[]> {
+  const byRow = {} as Record<TdrssRowType, TimelineEvent[]>;
+  for (const r of TDRSS_ROW_CONFIG) {
+    byRow[r.type] = [];
+  }
+  return byRow;
+}
+
+export function bucketTdrssEventsByRow(
+  events: TimelineEvent[],
+): Record<TdrssRowType, TimelineEvent[]> {
+  const byRow = emptyTdrssEventsByRow();
+  for (const ev of events) {
+    if (ev.type === "tdrss-s") byRow["tdrss-s"].push(ev);
+    else if (ev.type === "tdrss-ku") byRow["tdrss-ku"].push(ev);
+  }
+  return byRow;
+}
+
+export function layoutTdrssEventsByRow(
+  eventsByRow: Record<TdrssRowType, TimelineEvent[]>,
+): Record<TdrssRowType, TimelineEventLayout[]> {
+  const out = {} as Record<TdrssRowType, TimelineEventLayout[]>;
+  for (const row of TDRSS_ROW_CONFIG) {
+    out[row.type] = layoutEventsInRow(eventsByRow[row.type]);
+  }
+  return out;
+}
+
+/** Visible wall-time window from horizontal scroll position. */
+export function visibleTimeRangeMs(
+  scrollLeftPx: number,
+  viewportWidthPx: number,
+  timelineStartMs: number,
+  pxPerMs: number,
+  bufferPx = 400,
+): { startMs: number; endMs: number } {
+  const startMs =
+    timelineStartMs + (scrollLeftPx - bufferPx) / Math.max(pxPerMs, 1e-9);
+  const endMs =
+    timelineStartMs +
+    (scrollLeftPx + viewportWidthPx + bufferPx) / Math.max(pxPerMs, 1e-9);
+  return { startMs, endMs };
+}
+
+/** Keep layouts whose pass interval intersects [startMs, endMs). */
+export function filterLayoutsInTimeRange(
+  layouts: TimelineEventLayout[],
+  startMs: number,
+  endMs: number,
+): TimelineEventLayout[] {
+  return layouts.filter((layout) => {
+    const passStart = Date.parse(layout.event.start);
+    const passEnd = Date.parse(layout.event.end);
+    if (
+      !Number.isFinite(passStart) ||
+      !Number.isFinite(passEnd) ||
+      passEnd <= passStart
+    ) {
+      return false;
+    }
+    return passEnd > startMs && passStart < endMs;
+  });
 }
 
 const CHANEL_ROW_TYPES = [

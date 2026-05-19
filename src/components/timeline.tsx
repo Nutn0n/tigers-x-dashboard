@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FullscreenPanel } from "@/components/FullscreenPanel";
 import { useMissionDataSource } from "@/components/data-source-provider";
@@ -14,6 +14,7 @@ import {
   computeTimelineStartMs,
   computeSpanHours,
   emptyEventsByRow,
+  filterLayoutsInTimeRange,
   formatOffsetFromEpoch,
   isOutlineOnlyLane,
   layoutEventsByRow,
@@ -23,16 +24,20 @@ import {
   pxPerMsFromZoom,
   ROW_CONFIG,
   TICK_STEP_HOURS,
-  timelineTrackWidthPx,
+  TDRSS_ROW_CONFIG,
+  visibleTimeRangeMs,
   type TimelineEventLayout,
   type RowType,
   type TimelineEvent,
 } from "@/lib/mission-timeline";
+import {
+  TDRSS_TIMELINE_EVENTS,
+  TDRSS_TIMELINE_LAYOUTS,
+} from "@/lib/tdrss-timeline";
 import { useMissionTimelineScroll } from "@/hooks/use-mission-timeline-scroll";
 
 const FILLED_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-black/25 text-left shadow-[0_0_0_1px_rgba(0,0,0,0.35)]";
-/** ISS + COL/MPCC: solid fill, no border or outer ring. */
 const FILLED_BAR_PLAIN_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded text-left";
 const OUTLINE_BAR_CLASS =
@@ -42,13 +47,37 @@ const EVENT_LANE_HEIGHT_PX = 22;
 const EVENT_LANE_GAP_PX = 4;
 const EVENT_ROW_VERTICAL_PADDING_PX = 4;
 
+const TDRSS_LANE_HEIGHT_PX = 8;
+const TDRSS_LANE_GAP_PX = 2;
+const TDRSS_ROW_VERTICAL_PADDING_PX = 2;
+const TDRSS_BAR_CLASS = "absolute overflow-hidden rounded text-left";
+
+function rowTrackHeightPx(layouts: TimelineEventLayout[]) {
+  const laneCount = layouts.length > 0 ? layouts[0].laneCount : 1;
+  return (
+    EVENT_ROW_VERTICAL_PADDING_PX * 2 +
+    laneCount * EVENT_LANE_HEIGHT_PX +
+    Math.max(0, laneCount - 1) * EVENT_LANE_GAP_PX
+  );
+}
+
+function tdrssRowTrackHeightPx(layouts: TimelineEventLayout[]) {
+  const laneCount = layouts.length > 0 ? layouts[0].laneCount : 1;
+  return (
+    TDRSS_ROW_VERTICAL_PADDING_PX * 2 +
+    laneCount * TDRSS_LANE_HEIGHT_PX +
+    Math.max(0, laneCount - 1) * TDRSS_LANE_GAP_PX
+  );
+}
+
 type TimelineEventTooltipPayload = {
   id: string;
   title: string;
+  startLabel: string;
+  endLabel: string;
   startText: string;
   endText: string;
   anchor: DOMRect;
-  /** Hide tooltip when zoom changes without relying on effect setState. */
   capturedZoom: number;
 };
 
@@ -57,7 +86,7 @@ function TimelineEventHoverTooltip({
 }: {
   payload: TimelineEventTooltipPayload;
 }) {
-  const { anchor, title, startText, endText } = payload;
+  const { anchor, title, startLabel, endLabel, startText, endText } = payload;
   const left = anchor.left + anchor.width / 2;
   const top = anchor.top - 8;
   return (
@@ -75,11 +104,11 @@ function TimelineEventHoverTooltip({
       </p>
       <dl className="m-0 mt-1.5 space-y-0.5 text-[10px] leading-snug text-[#eee]/85 sm:text-[11px]">
         <div className="flex gap-2">
-          <dt className="m-0 shrink-0 text-[#eee]/55">Start</dt>
+          <dt className="m-0 shrink-0 text-[#eee]/55">{startLabel}</dt>
           <dd className="m-0 min-w-0 tabular-nums">{startText}</dd>
         </div>
         <div className="flex gap-2">
-          <dt className="m-0 shrink-0 text-[#eee]/55">End</dt>
+          <dt className="m-0 shrink-0 text-[#eee]/55">{endLabel}</dt>
           <dd className="m-0 min-w-0 tabular-nums">{endText}</dd>
         </div>
       </dl>
@@ -88,7 +117,7 @@ function TimelineEventHoverTooltip({
   );
 }
 
-function TimelineEventBar({
+const TimelineEventBar = memo(function TimelineEventBar({
   rowType,
   ev,
   layout,
@@ -135,7 +164,9 @@ function TimelineEventBar({
   );
   const outline = isOutlineOnlyLane(rowType);
   const plainFilledLane =
-    rowType === "iss-event" || rowType === "col-mpcc";
+    rowType === "iss-event" ||
+    rowType === "col-mpcc" ||
+    rowType === "operation";
   const barClassName = outline
     ? OUTLINE_BAR_CLASS
     : plainFilledLane
@@ -165,6 +196,8 @@ function TimelineEventBar({
         onHoverChange?.({
           id: ev.id,
           title: ev.name,
+          startLabel: "Start",
+          endLabel: "End",
           startText,
           endText,
           anchor: e.currentTarget.getBoundingClientRect(),
@@ -184,6 +217,172 @@ function TimelineEventBar({
       </span>
     </div>
   );
+});
+
+function TdrssPassBar({
+  layout,
+  timelineStartMs,
+  pxPerMs,
+  color,
+}: {
+  layout: TimelineEventLayout;
+  timelineStartMs: number;
+  pxPerMs: number;
+  color: string;
+}) {
+  const startMs = Date.parse(layout.event.start);
+  const endMs = Date.parse(layout.event.end);
+  if (
+    !Number.isFinite(startMs) ||
+    !Number.isFinite(endMs) ||
+    endMs <= startMs
+  ) {
+    return null;
+  }
+  const { left, width } = barLeftWidthPx(
+    timelineStartMs,
+    startMs,
+    endMs,
+    pxPerMs,
+  );
+  const barTop =
+    TDRSS_ROW_VERTICAL_PADDING_PX +
+    layout.lane * (TDRSS_LANE_HEIGHT_PX + TDRSS_LANE_GAP_PX);
+
+  return (
+    <div
+      data-pass-id={layout.event.id}
+      className={TDRSS_BAR_CLASS}
+      style={{
+        top: barTop,
+        height: TDRSS_LANE_HEIGHT_PX,
+        left,
+        width,
+        backgroundColor: color,
+      }}
+    />
+  );
+}
+
+const TdrssTimelineRow = memo(function TdrssTimelineRow({
+  allLayouts,
+  visibleStartMs,
+  visibleEndMs,
+  timelineStartMs,
+  pxPerMs,
+  zoom,
+  color,
+  onHoverChange,
+  withTopBorder = true,
+}: {
+  allLayouts: TimelineEventLayout[];
+  visibleStartMs: number;
+  visibleEndMs: number;
+  timelineStartMs: number;
+  pxPerMs: number;
+  zoom: number;
+  color: string;
+  onHoverChange: (payload: TimelineEventTooltipPayload | null) => void;
+  withTopBorder?: boolean;
+}) {
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rowHeight = tdrssRowTrackHeightPx(allLayouts);
+
+  const visibleLayouts = useMemo(
+    () => filterLayoutsInTimeRange(allLayouts, visibleStartMs, visibleEndMs),
+    [allLayouts, visibleStartMs, visibleEndMs],
+  );
+
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  const showTooltipForBar = useCallback(
+    (bar: HTMLElement) => {
+      const passId = bar.getAttribute("data-pass-id");
+      if (!passId) return;
+      const layout = visibleLayouts.find((l) => l.event.id === passId);
+      if (!layout) return;
+      const startMs = Date.parse(layout.event.start);
+      const endMs = Date.parse(layout.event.end);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return;
+      onHoverChange({
+        id: layout.event.id,
+        title: layout.event.name,
+        startLabel: "AOS",
+        endLabel: "LOS",
+        startText: formatBangkokDdMmYyHhMmSs(new Date(startMs)),
+        endText: formatBangkokDdMmYyHhMmSs(new Date(endMs)),
+        anchor: bar.getBoundingClientRect(),
+        capturedZoom: zoom,
+      });
+    },
+    [visibleLayouts, zoom, onHoverChange],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const bar = (e.target as HTMLElement).closest<HTMLElement>(
+        "[data-pass-id]",
+      );
+      if (!bar) {
+        clearHideTimer();
+        hideTimerRef.current = setTimeout(() => onHoverChange(null), 120);
+        return;
+      }
+      clearHideTimer();
+      showTooltipForBar(bar);
+    },
+    [clearHideTimer, onHoverChange, showTooltipForBar],
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    clearHideTimer();
+    hideTimerRef.current = setTimeout(() => onHoverChange(null), 120);
+  }, [clearHideTimer, onHoverChange]);
+
+  return (
+    <div
+      className={`relative shrink-0 border-solid border-[#eee]/12 bg-[#050505] ${withTopBorder ? "border-t" : ""}`}
+      style={{ minHeight: rowHeight }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      {visibleLayouts.map((layout) => (
+        <TdrssPassBar
+          key={layout.event.id}
+          layout={layout}
+          timelineStartMs={timelineStartMs}
+          pxPerMs={pxPerMs}
+          color={color}
+        />
+      ))}
+    </div>
+  );
+});
+
+function TimelineNowLine({
+  nowMs,
+  timelineStartMs,
+  pxPerMs,
+}: {
+  nowMs: number;
+  timelineStartMs: number;
+  pxPerMs: number;
+}) {
+  const left = nowLineLeftPx(nowMs, timelineStartMs, pxPerMs);
+  if (left < 0) return null;
+  return (
+    <div
+      className="pointer-events-none absolute inset-y-0 z-[8] w-px bg-white"
+      style={{ left }}
+      role="presentation"
+      aria-label="Current time"
+    />
+  );
 }
 
 export function Timeline() {
@@ -191,20 +390,53 @@ export function Timeline() {
   const epochMs = Date.parse(timelineData.mission.epoch);
   const events = timelineData.events as TimelineEvent[];
 
-  /** Match SSR + first client render: wall clock only after mount (avoids hydration mismatch). */
   const [nowMs, setNowMs] = useState(() =>
     Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0,
   );
   const [eventTooltip, setEventTooltip] =
     useState<TimelineEventTooltipPayload | null>(null);
+  const [viewport, setViewport] = useState({ scrollLeft: 0, width: 0 });
 
   const epochOk = Number.isFinite(epochMs) && epochMs > 0;
-  const timelineStartMs = epochOk
-    ? computeTimelineStartMs(epochMs, events)
-    : epochMs;
-  const spanHours = epochOk
-    ? computeSpanHours(timelineStartMs, events)
-    : MIN_TIMELINE_SPAN_HOURS;
+
+  const timelineStartMs = useMemo(
+    () => (epochOk ? computeTimelineStartMs(epochMs, events) : epochMs),
+    [epochOk, epochMs, events],
+  );
+
+  const spanHours = useMemo(() => {
+    if (!epochOk) return MIN_TIMELINE_SPAN_HOURS;
+    const missionSpan = computeSpanHours(timelineStartMs, events);
+    const tdrssSpan = computeSpanHours(
+      timelineStartMs,
+      TDRSS_TIMELINE_EVENTS,
+    );
+    return Math.max(missionSpan, tdrssSpan);
+  }, [epochOk, timelineStartMs, events]);
+
+  const { eventsByRow, rowEventLayouts } = useMemo(() => {
+    if (!epochOk) {
+      return {
+        eventsByRow: emptyEventsByRow(),
+        rowEventLayouts: layoutEventsByRow(emptyEventsByRow()),
+      };
+    }
+    const byRow = bucketEventsByRow(events);
+    return {
+      eventsByRow: byRow,
+      rowEventLayouts: layoutEventsByRow(byRow),
+    };
+  }, [epochOk, events]);
+
+  const tdrssGroupHeightPx = useMemo(
+    () =>
+      TDRSS_ROW_CONFIG.reduce(
+        (sum, sub) =>
+          sum + tdrssRowTrackHeightPx(TDRSS_TIMELINE_LAYOUTS[sub.type]),
+        0,
+      ),
+    [],
+  );
 
   useEffect(() => {
     setNowMs(Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0);
@@ -227,6 +459,57 @@ export function Timeline() {
 
   const pxPerHour = BASE_PX_PER_HOUR * zoom;
   const pxPerMs = pxPerMsFromZoom(zoom);
+
+  const staticTrackWidthPx = useMemo(
+    () => spanHours * pxPerHour,
+    [spanHours, pxPerHour],
+  );
+
+  const visibleRange = useMemo(
+    () =>
+      visibleTimeRangeMs(
+        viewport.scrollLeft,
+        viewport.width,
+        timelineStartMs,
+        pxPerMs,
+      ),
+    [viewport.scrollLeft, viewport.width, timelineStartMs, pxPerMs],
+  );
+
+  const viewportRafRef = useRef<number | null>(null);
+
+  const syncViewport = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setViewport({ scrollLeft: el.scrollLeft, width: el.clientWidth });
+  }, [scrollRef]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const scheduleSync = () => {
+      if (viewportRafRef.current !== null) {
+        cancelAnimationFrame(viewportRafRef.current);
+      }
+      viewportRafRef.current = requestAnimationFrame(() => {
+        viewportRafRef.current = null;
+        syncViewport();
+      });
+    };
+
+    scheduleSync();
+    el.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync);
+
+    return () => {
+      el.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("resize", scheduleSync);
+      if (viewportRafRef.current !== null) {
+        cancelAnimationFrame(viewportRafRef.current);
+      }
+    };
+  }, [scrollRef, syncViewport, zoom]);
 
   useEffect(() => {
     if (!epochOk) return;
@@ -256,18 +539,13 @@ export function Timeline() {
 
   const tickStepPx = TICK_STEP_HOURS * pxPerHour;
   const tickCount = Math.floor(spanHours / TICK_STEP_HOURS) + 1;
-  const eventsByRow = epochOk
-    ? bucketEventsByRow(events)
-    : emptyEventsByRow();
-  const rowEventLayouts = layoutEventsByRow(eventsByRow);
-  const trackWidthPx = timelineTrackWidthPx({
-    spanHours,
-    pxPerHour,
-    nowMs,
-    timelineStartMs,
-    pxPerMs,
-  });
-  const nowLeftPx = nowLineLeftPx(nowMs, timelineStartMs, pxPerMs);
+
+  const setTooltipStable = useCallback(
+    (payload: TimelineEventTooltipPayload | null) => {
+      setEventTooltip(payload);
+    },
+    [],
+  );
 
   return (
     <FullscreenPanel className="flex flex-col">
@@ -304,14 +582,45 @@ export function Timeline() {
                 className="flex w-[7.5rem] shrink-0 flex-col border-solid border-[#eee]/20 pr-2 pt-9 sm:w-36"
                 aria-hidden
               >
-                {ROW_CONFIG.map((row) => (
-                  <div
-                    key={row.type}
-                    className="flex min-h-0 flex-1 items-center border-t border-solid border-[#eee]/15 py-1 text-left text-[10px] font-medium uppercase leading-tight tracking-wide text-[#eee]/75 first:border-t-0 sm:text-xs"
-                  >
-                    {row.label}
+                <div
+                  className="flex shrink-0 flex-row"
+                  style={{ minHeight: tdrssGroupHeightPx }}
+                >
+                  <div className="flex w-[3.25rem] shrink-0 items-center justify-center border-r border-solid border-[#eee]/15 px-1 py-1 text-center text-[10px] font-medium uppercase leading-tight tracking-wide text-[#eee]/75 sm:w-14 sm:text-xs">
+                    TDRSS
                   </div>
-                ))}
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    {TDRSS_ROW_CONFIG.map((sub) => {
+                      const subHeight = tdrssRowTrackHeightPx(
+                        TDRSS_TIMELINE_LAYOUTS[sub.type],
+                      );
+                      return (
+                        <div
+                          key={sub.type}
+                          className="flex shrink-0 items-center py-1 pl-2 text-left text-[10px] font-medium uppercase leading-tight tracking-wide sm:text-xs"
+                          style={{
+                            minHeight: subHeight,
+                            color: sub.color,
+                          }}
+                        >
+                          {sub.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                {ROW_CONFIG.map((row) => {
+                  const rowHeight = rowTrackHeightPx(rowEventLayouts[row.type]);
+                  return (
+                    <div
+                      key={row.type}
+                      className="flex shrink-0 items-center border-t border-solid border-[#eee]/15 py-1 text-left text-[10px] font-medium uppercase leading-tight tracking-wide text-[#eee]/75 sm:text-xs"
+                      style={{ minHeight: rowHeight }}
+                    >
+                      {row.label}
+                    </div>
+                  );
+                })}
               </div>
 
               <div
@@ -331,11 +640,14 @@ export function Timeline() {
                 </span>
                 <div
                   className="relative flex h-full min-h-[220px] cursor-inherit flex-col"
-                  style={{ width: trackWidthPx, minWidth: trackWidthPx }}
+                  style={{
+                    width: staticTrackWidthPx,
+                    minWidth: staticTrackWidthPx,
+                  }}
                 >
                   <div
                     className="relative min-h-[3rem] shrink-0 border-b border-solid border-[#eee]/20 bg-[#0a0a0a] py-1"
-                    style={{ width: trackWidthPx }}
+                    style={{ width: staticTrackWidthPx }}
                   >
                     {Array.from({ length: tickCount }, (_, i) => {
                       const hour = i * TICK_STEP_HOURS;
@@ -344,7 +656,7 @@ export function Timeline() {
                       const tickMs = timelineStartMs + hour * MS_PER_HOUR;
                       const tickColumnWidth = Math.max(
                         1,
-                        Math.min(tickStepPx, trackWidthPx - left),
+                        Math.min(tickStepPx, staticTrackWidthPx - left),
                       );
                       const offsetLabel = formatOffsetFromEpoch(
                         epochMs,
@@ -374,18 +686,27 @@ export function Timeline() {
                   </div>
 
                   <div className="flex min-h-0 flex-1 flex-col">
+                    {TDRSS_ROW_CONFIG.map((sub, subIdx) => (
+                      <TdrssTimelineRow
+                        key={sub.type}
+                        allLayouts={TDRSS_TIMELINE_LAYOUTS[sub.type]}
+                        visibleStartMs={visibleRange.startMs}
+                        visibleEndMs={visibleRange.endMs}
+                        timelineStartMs={timelineStartMs}
+                        pxPerMs={pxPerMs}
+                        zoom={zoom}
+                        color={sub.color}
+                        onHoverChange={setTooltipStable}
+                        withTopBorder={subIdx > 0}
+                      />
+                    ))}
                     {ROW_CONFIG.map((row) => {
                       const layouts = rowEventLayouts[row.type];
-                      const laneCount =
-                        layouts.length > 0 ? layouts[0].laneCount : 1;
-                      const rowHeight =
-                        EVENT_ROW_VERTICAL_PADDING_PX * 2 +
-                        laneCount * EVENT_LANE_HEIGHT_PX +
-                        Math.max(0, laneCount - 1) * EVENT_LANE_GAP_PX;
+                      const rowHeight = rowTrackHeightPx(layouts);
                       return (
                         <div
                           key={row.type}
-                          className="relative min-h-0 flex-1 border-t border-solid border-[#eee]/12 bg-[#050505] first:border-t-0"
+                          className="relative shrink-0 border-t border-solid border-[#eee]/12 bg-[#050505]"
                           style={{ minHeight: rowHeight }}
                         >
                           {layouts.map((layout) => (
@@ -397,7 +718,7 @@ export function Timeline() {
                               timelineStartMs={timelineStartMs}
                               pxPerMs={pxPerMs}
                               zoom={zoom}
-                              onHoverChange={setEventTooltip}
+                              onHoverChange={setTooltipStable}
                             />
                           ))}
                         </div>
@@ -405,14 +726,11 @@ export function Timeline() {
                     })}
                   </div>
 
-                  {nowLeftPx >= 0 && (
-                    <div
-                      className="pointer-events-none absolute inset-y-0 z-[8] w-px bg-white"
-                      style={{ left: nowLeftPx }}
-                      role="presentation"
-                      aria-label="Current time"
-                    />
-                  )}
+                  <TimelineNowLine
+                    nowMs={nowMs}
+                    timelineStartMs={timelineStartMs}
+                    pxPerMs={pxPerMs}
+                  />
                 </div>
               </div>
             </div>
