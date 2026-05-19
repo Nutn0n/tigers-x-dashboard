@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useMissionDataSource } from "@/components/data-source-provider";
 import {
   DEFAULT_TIMEZONE_SLOTS,
@@ -22,6 +28,9 @@ import {
   DOT_UNKNOWN,
   GMT_TILE_EXTRA,
   LABEL,
+  LINK_PASS_BAND_LABEL_CLASS,
+  LINK_PASS_BAND_ROW_CLASS,
+  LINK_PASS_LINKS_ROW_CLASS,
   LOGO_FRAME,
   MET_TILE_EXTRA,
   SELECT,
@@ -30,6 +39,9 @@ import {
   TZ_TILE_EXTRA,
   tile,
 } from "@/lib/dashboard-top-bar-styles";
+import { tdrssPasses } from "@/data/data-source";
+import type { LinkPassEndpoint, LinkPassStatusSnapshot } from "@/lib/link-pass-status";
+import { resolveLinkPassStatus } from "@/lib/tdrss-link-pass";
 
 function useEverySecond(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -246,33 +258,64 @@ function MetTile({ now }: { now: Date }) {
   );
 }
 
-function AosLosTile({
-  aosActive,
-  losActive,
+function linkDotProps(
+  bandLabel: string,
+  endpoint: LinkPassEndpoint,
+  kind: "aos" | "los",
+) {
+  const active = kind === "aos" ? endpoint.aosActive : endpoint.losActive;
+  const color = active
+    ? kind === "aos"
+      ? DOT_AOS
+      : DOT_LOS
+    : DOT_UNKNOWN;
+  const label = active
+    ? kind === "aos"
+      ? `${bandLabel} AOS: acquired`
+      : `${bandLabel} LOS: loss of signal`
+    : kind === "aos"
+      ? `${bandLabel} AOS: status unknown`
+      : `${bandLabel} LOS: status unknown`;
+  return { color, label };
+}
+
+function BandLinkRow({
+  bandLabel,
+  endpoint,
 }: {
-  aosActive: boolean;
-  losActive: boolean;
+  bandLabel: string;
+  endpoint: LinkPassEndpoint;
 }) {
-  const aosDotColor = aosActive ? DOT_AOS : DOT_UNKNOWN;
-  const losDotColor = losActive ? DOT_LOS : DOT_UNKNOWN;
-  const aosDotLabel = aosActive ? "AOS: acquired" : "AOS: status unknown";
-  const losDotLabel = losActive ? "LOS: loss of signal" : "LOS: status unknown";
+  const aos = linkDotProps(bandLabel, endpoint, "aos");
+  const los = linkDotProps(bandLabel, endpoint, "los");
 
   return (
-    <div className={tile(AOS_LOS_TILE_EXTRA)}>
-      <div className="flex w-full flex-wrap items-baseline justify-center gap-x-4">
+    <div className={LINK_PASS_BAND_ROW_CLASS}>
+      <p className={LINK_PASS_BAND_LABEL_CLASS}>{bandLabel}</p>
+      <div className={LINK_PASS_LINKS_ROW_CLASS}>
         <LinkBlock
           title="AOS"
-          value="+00:00:00"
-          dotColor={aosDotColor}
-          dotLabel={aosDotLabel}
+          value={endpoint.aosDisplay}
+          dotColor={aos.color}
+          dotLabel={aos.label}
         />
         <LinkBlock
           title="LOS"
-          value="00:00:000"
-          dotColor={losDotColor}
-          dotLabel={losDotLabel}
+          value={endpoint.losDisplay}
+          dotColor={los.color}
+          dotLabel={los.label}
         />
+      </div>
+    </div>
+  );
+}
+
+function LinkPassTile({ status }: { status: LinkPassStatusSnapshot }) {
+  return (
+    <div className={tile(AOS_LOS_TILE_EXTRA)}>
+      <div className="flex w-full flex-col gap-3 py-0.5">
+        <BandLinkRow bandLabel="S-Band" endpoint={status.sBand} />
+        <BandLinkRow bandLabel="KU-Band" endpoint={status.kuBand} />
       </div>
     </div>
   );
@@ -307,8 +350,10 @@ export function DashboardTopBar() {
     });
   };
 
-  const aosActive = false;
-  const losActive = false;
+  const linkPassStatus = useMemo(
+    () => resolveLinkPassStatus(now.getTime(), tdrssPasses),
+    [now],
+  );
 
   return (
     <div className="w-full shrink-0">
@@ -344,7 +389,7 @@ export function DashboardTopBar() {
               setTimezoneSlots={setTimezoneSlots}
             />
             <MetTile now={now} />
-            <AosLosTile aosActive={aosActive} losActive={losActive} />
+            <LinkPassTile status={linkPassStatus} />
           </div>
         </header>
       </div>

@@ -31,6 +31,15 @@ export const MET_TILE_EXTRA =
   "min-w-[9rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-0";
 
 export const AOS_LOS_TILE_EXTRA =
-  "min-w-[12rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-0";
+  "min-w-[20rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-[18rem]";
+
+export const LINK_PASS_BAND_ROW_CLASS =
+  "flex w-full flex-col items-center gap-1.5 first:mt-0";
+
+export const LINK_PASS_BAND_LABEL_CLASS =
+  "m-0 w-full text-center text-[10px] font-medium uppercase tracking-wider text-[#eee]/70 sm:text-xs";
+
+export const LINK_PASS_LINKS_ROW_CLASS =
+  "flex w-full flex-wrap items-baseline justify-center gap-x-4 gap-y-2";
 
 export const TIMEZONE_SLOT_INDICES = [0, 1, 2] as const;

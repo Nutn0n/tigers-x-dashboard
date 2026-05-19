@@ -1,5 +1,12 @@
 import missionOperationJson from "@/data/mission-operation.json";
+import tdrssJson from "@/data/tdrss.json";
 import type { TimelineEvent } from "@/lib/mission-timeline";
+
+export type TdrssPass = {
+  band: "s" | "ku";
+  start: string;
+  end: string;
+};
 
 export type MissionTimelineData = {
   mission: {
@@ -11,6 +18,8 @@ export type MissionTimelineData = {
 };
 
 export const missionTimelineData = missionOperationJson as MissionTimelineData;
+
+export const tdrssPasses = tdrssJson as TdrssPass[];
 
 export const apiPaths = {
   iss: "/api/iss",
