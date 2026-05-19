@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { TelemetryBooleanChip } from "@/components/telemetry-boolean-chip";
+import { useTelemetry } from "@/components/telemetry-provider";
 import { DASHBOARD_PANEL_SECTION_LABEL_CLASS } from "@/lib/dashboard-panel-styles";
 import type { TelemetrySnapshot } from "@/lib/telemetry";
 
@@ -30,17 +30,6 @@ const PUMP_STATUS_KEYS = [
 
 type PumpStatusKey = (typeof PUMP_STATUS_KEYS)[number];
 
-const defaultPumpFlags: Record<PumpStatusKey, boolean> = {
-  PumpStatus1: false,
-  PumpStatus2: false,
-  PumpStatus3: false,
-  PumpStatus4: false,
-  PumpStatus5: false,
-  PumpStatus6: false,
-  PumpStatus7: false,
-  PumpStatus8: false,
-};
-
 const PUMP_ROWS = [
   [PUMP_STATUS_KEYS[0], PUMP_STATUS_KEYS[1]],
   [PUMP_STATUS_KEYS[2], PUMP_STATUS_KEYS[3]],
@@ -49,9 +38,7 @@ const PUMP_ROWS = [
 ] as const satisfies ReadonlyArray<readonly [PumpStatusKey, PumpStatusKey]>;
 
 type PumpStatusTableProps = {
-  /** Section caption above the table (e.g. "Pump status"). */
   caption?: string;
-  /** No top border or padding (e.g. directly under a diagram). */
   flushTop?: boolean;
 };
 
@@ -59,7 +46,7 @@ export function PumpStatusTable({
   caption = "Pump status",
   flushTop = false,
 }: PumpStatusTableProps) {
-  const [pumpFlags] = useState<Record<PumpStatusKey, boolean>>(defaultPumpFlags);
+  const { snapshot } = useTelemetry();
 
   return (
     <div
@@ -85,7 +72,7 @@ export function PumpStatusTable({
                   key={`${key}-value`}
                   className={`py-1 text-right ${colIndex === 0 ? "pr-2 sm:pr-4" : ""}`}
                 >
-                  <TelemetryBooleanChip field={key} value={pumpFlags[key]} />
+                  <TelemetryBooleanChip field={key} value={snapshot[key]} />
                 </td>,
               ])}
             </tr>
