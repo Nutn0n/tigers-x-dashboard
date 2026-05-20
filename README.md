@@ -93,6 +93,17 @@ The website utilizes data from three sources:
 
 ## Build And Run
 
+### Telemetry API (live payload data)
+
+The dashboard calls `https://telemetry.ishalab.space` directly from the browser using a public read token (`NEXT_PUBLIC_TELEMETRY_API_TOKEN` in `.env.example`). REST requests send `Authorization: Bearer …`; the WebSocket uses `?token=…` because browsers cannot set WS auth headers.
+
+```bash
+cp .env.example .env.local
+# Optional: override NEXT_PUBLIC_TELEMETRY_API_TOKEN or NEXT_PUBLIC_TELEMETRY_API_BASE_URL
+```
+
+Legacy same-origin proxies remain at `/api/telemetry/*` if you set server-only `TELEMETRY_API_TOKEN` instead.
+
 ### Run Locally
 
 ```bash

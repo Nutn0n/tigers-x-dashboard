@@ -23,6 +23,9 @@ export const tdrssPasses = tdrssJson as TdrssPass[];
 
 export const apiPaths = {
   iss: "/api/iss",
+  telemetryHealth: "/api/telemetry/health",
+  telemetryLatest: "/api/telemetry/latest",
+  telemetryStream: "/api/telemetry/stream",
 } as const;
 
 export const externalDataSources = {

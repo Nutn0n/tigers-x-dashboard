@@ -1,10 +1,6 @@
 /**
- * Telemetry field types and API path placeholder for the microfluidic / camera stack.
- * Wire `TELEMETRY_API_PATH` (or a full URL) when the backend contract is ready.
+ * Telemetry field types — keys match upstream API parameter names exactly.
  */
-
-/** Relative path or full URL for the telemetry endpoint — set when the API exists. */
-export const TELEMETRY_API_PATH = "";
 
 /** `channel_id` enum — narrow when the API documents allowed values. */
 export type TelemetryChannelId = string;
@@ -44,4 +40,83 @@ export type TelemetrySnapshot = {
   event_marker: string;
   /** Fault identifier as string code or numeric code from hardware. */
   fault_code: string | number;
+};
+
+export const TELEMETRY_SNAPSHOT_KEYS = [
+  "CamStatus1",
+  "CamStatus2",
+  "CamStatus3",
+  "CamStatus4",
+  "PumpStatus1",
+  "PumpStatus2",
+  "PumpStatus3",
+  "PumpStatus4",
+  "PumpStatus5",
+  "PumpStatus6",
+  "PumpStatus7",
+  "PumpStatus8",
+  "CaptureTime",
+  "CommandReceive",
+  "CommunicationStatus",
+  "Temperature",
+  "Torch_Level",
+  "TM_Counter",
+  "recipe_id",
+  "channel_id",
+  "capture_active",
+  "selected_camera_pair",
+  "pump_mode_a",
+  "pump_mode_b",
+  "event_marker",
+  "fault_code",
+] as const satisfies ReadonlyArray<keyof TelemetrySnapshot>;
+
+export function createDefaultTelemetrySnapshot(): TelemetrySnapshot {
+  return {
+    CamStatus1: false,
+    CamStatus2: false,
+    CamStatus3: false,
+    CamStatus4: false,
+    PumpStatus1: false,
+    PumpStatus2: false,
+    PumpStatus3: false,
+    PumpStatus4: false,
+    PumpStatus5: false,
+    PumpStatus6: false,
+    PumpStatus7: false,
+    PumpStatus8: false,
+    CaptureTime: 0,
+    CommandReceive: 0,
+    CommunicationStatus: false,
+    Temperature: 0,
+    Torch_Level: 0,
+    TM_Counter: 0,
+    recipe_id: "",
+    channel_id: "",
+    capture_active: false,
+    selected_camera_pair: "",
+    pump_mode_a: "",
+    pump_mode_b: "",
+    event_marker: "",
+    fault_code: "",
+  };
+}
+
+export type TelemetryConnectionState =
+  | "connected"
+  | "stale"
+  | "unavailable"
+  | "error";
+
+export type TelemetryHealthSummary = {
+  connected: boolean;
+  lastError: string | null;
+  lastMessageAt: string | null;
+};
+
+export type TelemetryLiveState = {
+  snapshot: TelemetrySnapshot;
+  connection: TelemetryConnectionState;
+  lastReceivedAt: string | null;
+  health: TelemetryHealthSummary | null;
 };
