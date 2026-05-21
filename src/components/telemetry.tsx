@@ -1,6 +1,5 @@
 "use client";
 
-import { TelemetryBooleanChip } from "@/components/telemetry-boolean-chip";
 import { TelemetryConnectionStatus } from "@/components/telemetry-connection-status";
 import { useTelemetry } from "@/components/telemetry-provider";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
@@ -55,31 +54,6 @@ export function Telemetry() {
               </th>
               <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
                 {snapshot.Temperature}
-              </td>
-            </tr>
-            <tr className="border-t border-solid border-[#eee]/10">
-              <th
-                scope="row"
-                className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
-              >
-                CaptureTime
-              </th>
-              <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
-                {snapshot.CaptureTime}
-              </td>
-            </tr>
-            <tr className="border-t border-solid border-[#eee]/10">
-              <th
-                scope="row"
-                className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
-              >
-                CommunicationStatus
-              </th>
-              <td className="py-1 text-right">
-                <TelemetryBooleanChip
-                  field="CommunicationStatus"
-                  value={snapshot.CommunicationStatus}
-                />
               </td>
             </tr>
             <tr className="border-t border-solid border-[#eee]/10">

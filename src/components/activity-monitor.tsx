@@ -3,7 +3,10 @@
 import { useMemo } from "react";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
 import { useMissionTimelineEvents } from "@/hooks/use-mission-timeline-events";
-import { DASHBOARD_PANEL_MUTED_TEXT_CLASS } from "@/lib/dashboard-panel-styles";
+import {
+  DASHBOARD_NEXT_ACTIVITY_PILL_CLASS,
+  DASHBOARD_PANEL_MUTED_TEXT_CLASS,
+} from "@/lib/dashboard-panel-styles";
 import {
   formatHhMmSsCountdownRemainingMs,
   formatHhMmSsFromDurationMs,
@@ -13,14 +16,29 @@ import {
   findCurrentStationTimelineEvent,
   findNextChanelTimelineEvent,
   findNextStationTimelineEvent,
-  missionDayNumberFromEpoch,
+  resolveActivityDescriptionDisplay,
+  timelineEventDescription,
 } from "@/lib/mission-timeline";
 
 const TIMER_VALUE_CLASS =
   "shrink-0 font-mono text-xl font-semibold tabular-nums leading-none tracking-tight text-[#eee] sm:text-2xl";
 
+const DESCRIPTION_BODY_CLASS =
+  "m-0 text-left text-xs leading-relaxed text-[#eee]/85 sm:text-sm";
+
+const ACTIVITY_TITLE_CLASS =
+  "m-0 mb-2 text-left text-xs font-medium leading-snug text-[#eee] sm:text-sm";
+
+const NO_ACTIVITY_MESSAGE = "No current or upcoming activity.";
+
 export function ActivityMonitor() {
-  const { epochMs, epochOk, nowMs, events } = useMissionTimelineEvents();
+  const { epochOk, nowMs, events } = useMissionTimelineEvents();
+
+  const descriptionDisplay = useMemo(
+    () =>
+      epochOk ? resolveActivityDescriptionDisplay(nowMs, events) : null,
+    [epochOk, nowMs, events],
+  );
 
   const current = epochOk
     ? findCurrentChanelTimelineEvent(nowMs, events)
@@ -61,11 +79,6 @@ export function ActivityMonitor() {
     if (!Number.isFinite(startMs)) return null;
     return startMs - nowMs;
   }, [stationNext, nowMs]);
-
-  const missionDay = useMemo(
-    () => missionDayNumberFromEpoch(nowMs, epochMs),
-    [nowMs, epochMs],
-  );
 
   return (
     <TitledDashboardPanel title="Activity Monitor" panelId="activity-monitor">
@@ -148,19 +161,25 @@ export function ActivityMonitor() {
             </div>
           </div>
           <div className="mt-5 w-full min-w-0 border-t border-solid border-[color:var(--border)] pt-5">
-            <p className="m-0 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
-              Mission day
-            </p>
-            <p
-              className={`m-0 mt-1.5 w-full min-w-0 text-left ${TIMER_VALUE_CLASS}`}
-              aria-label={
-                missionDay != null
-                  ? `Mission day ${missionDay}`
-                  : "Mission day not started"
-              }
-            >
-              {missionDay != null ? String(missionDay) : "—"}
-            </p>
+            {descriptionDisplay ? (
+              <div className="w-full min-w-0">
+                {descriptionDisplay.showNextPill ? (
+                  <span className={DASHBOARD_NEXT_ACTIVITY_PILL_CLASS}>
+                    Next Activity
+                  </span>
+                ) : null}
+                <p className={ACTIVITY_TITLE_CLASS}>
+                  {descriptionDisplay.event.name}
+                </p>
+                <p className={DESCRIPTION_BODY_CLASS}>
+                  {timelineEventDescription(descriptionDisplay.event)}
+                </p>
+              </div>
+            ) : (
+              <p className={DASHBOARD_PANEL_MUTED_TEXT_CLASS}>
+                {NO_ACTIVITY_MESSAGE}
+              </p>
+            )}
           </div>
         </div>
       )}

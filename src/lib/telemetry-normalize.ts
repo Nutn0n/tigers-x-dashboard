@@ -18,7 +18,6 @@ const BOOLEAN_KEYS = new Set<keyof TelemetrySnapshot>([
   "PumpStatus6",
   "PumpStatus7",
   "PumpStatus8",
-  "CommunicationStatus",
   "capture_active",
 ]);
 

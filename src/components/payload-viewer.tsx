@@ -2,7 +2,6 @@
 
 import { TelemetryBooleanChip } from "@/components/telemetry-boolean-chip";
 import { useTelemetry } from "@/components/telemetry-provider";
-import { TelemetryStringValueBox } from "@/components/telemetry-string-value-box";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
 import { DashboardSchematicImage } from "@/components/dashboard-schematic-image";
 import {
@@ -81,27 +80,10 @@ export function PayloadViewer() {
                   scope="row"
                   className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
                 >
-                  capture_active
+                  CaptureTime
                 </th>
-                <td className="py-1 text-right">
-                  <TelemetryBooleanChip
-                    field="capture_active"
-                    value={snapshot.capture_active}
-                  />
-                </td>
-              </tr>
-              <tr className="border-t border-solid border-[#eee]/10">
-                <th
-                  scope="row"
-                  className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
-                >
-                  selected_camera_pair
-                </th>
-                <td className="py-1 text-right">
-                  <TelemetryStringValueBox
-                    field="selected_camera_pair"
-                    value={snapshot.selected_camera_pair}
-                  />
+                <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
+                  {snapshot.CaptureTime}
                 </td>
               </tr>
             </tbody>

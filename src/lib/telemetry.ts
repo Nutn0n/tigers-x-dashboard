@@ -27,7 +27,6 @@ export type TelemetrySnapshot = {
   CaptureTime: number;
   /** Integer flag for command receive state. */
   CommandReceive: number;
-  CommunicationStatus: boolean;
   Temperature: number;
   Torch_Level: number;
   TM_Counter: number;
@@ -57,7 +56,6 @@ export const TELEMETRY_SNAPSHOT_KEYS = [
   "PumpStatus8",
   "CaptureTime",
   "CommandReceive",
-  "CommunicationStatus",
   "Temperature",
   "Torch_Level",
   "TM_Counter",
@@ -87,7 +85,6 @@ export function createDefaultTelemetrySnapshot(): TelemetrySnapshot {
     PumpStatus8: false,
     CaptureTime: 0,
     CommandReceive: 0,
-    CommunicationStatus: false,
     Temperature: 0,
     Torch_Level: 0,
     TM_Counter: 0,
