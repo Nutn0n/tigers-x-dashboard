@@ -9,49 +9,17 @@ import {
   degreesLong,
 } from "satellite.js";
 import type { PositionAndVelocity, SatRec } from "satellite.js";
-import { externalDataSources } from "@/data/data-source";
+import { getIssTleLines } from "@/lib/iss-tle-store";
 import { groundTrackToSvgPaths } from "@/lib/iss-map-projection";
 
 export const dynamic = "force-dynamic";
 
-const CELESTRAK_TLE = externalDataSources.celestrakTle;
-
-const TLE_CACHE_MS = 60 * 60 * 1000;
 /** Samples per one orbital period (each span uses this × orbit count). */
 const ORBIT_SAMPLES_PER_PERIOD = 512;
 const ORBITS_BEHIND = 2;
 const ORBITS_AHEAD = 2;
 /** Fallback LEO period if mean motion is unusable (minutes). */
 const FALLBACK_PERIOD_MIN = 92.68;
-
-let tleCache: { line1: string; line2: string; fetchedAt: number } | null =
-  null;
-
-async function loadTleLines(): Promise<{ line1: string; line2: string }> {
-  const now = Date.now();
-  if (tleCache && now - tleCache.fetchedAt < TLE_CACHE_MS) {
-    return { line1: tleCache.line1, line2: tleCache.line2 };
-  }
-  const res = await fetch(CELESTRAK_TLE, {
-    cache: "no-store",
-    headers: { Accept: "text/plain,*/*" },
-  });
-  if (!res.ok) {
-    throw new Error(`CelesTrak HTTP ${res.status}`);
-  }
-  const text = await res.text();
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-  const line1 = lines.find((l) => l.startsWith("1 "));
-  const line2 = lines.find((l) => l.startsWith("2 "));
-  if (!line1 || !line2) {
-    throw new Error("TLE parse failed");
-  }
-  tleCache = { line1, line2, fetchedAt: now };
-  return { line1, line2 };
-}
 
 function stateFromPv(pv: PositionAndVelocity, date: Date) {
   const jd = jday(date);
@@ -104,7 +72,7 @@ function sampleGroundTrackRange(
 
 export async function GET() {
   try {
-    const { line1, line2 } = await loadTleLines();
+    const { line1, line2 } = await getIssTleLines();
     const satrec = twoline2satrec(line1, line2);
     const now = new Date();
     const pvNow = propagate(satrec, now);

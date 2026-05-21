@@ -20,6 +20,9 @@
 # production
 /build
 
+# runtime ISS TLE cache (seed lives in src/data/iss-tle.json)
+/data/
+
 # misc
 .DS_Store
 *.pem
