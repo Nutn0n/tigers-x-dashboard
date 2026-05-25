@@ -597,10 +597,9 @@ export function Timeline() {
                       return (
                         <div
                           key={sub.type}
-                          className="flex shrink-0 items-center py-1 pl-2 text-left text-[10px] font-medium uppercase leading-tight tracking-wide sm:text-xs"
+                          className="flex shrink-0 items-center py-1 pl-2 text-left text-[10px] font-medium uppercase leading-tight tracking-wide text-[#eee]/75 sm:text-xs"
                           style={{
                             minHeight: subHeight,
-                            color: sub.color,
                           }}
                         >
                           {sub.label}

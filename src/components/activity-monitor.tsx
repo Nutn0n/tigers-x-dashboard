@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
 import { useMissionTimelineEvents } from "@/hooks/use-mission-timeline-events";
+import { apiPaths } from "@/data/data-source";
+import { withBasePath } from "@/lib/app-path";
+import {
+  latLonToMapSvg,
+  MAP_SVG_HEIGHT,
+  MAP_SVG_WIDTH,
+} from "@/lib/iss-map-projection";
 import {
   DASHBOARD_NEXT_ACTIVITY_PILL_CLASS,
   DASHBOARD_PANEL_MUTED_TEXT_CLASS,
@@ -31,8 +38,67 @@ const ACTIVITY_TITLE_CLASS =
 
 const NO_ACTIVITY_MESSAGE = "No current or upcoming activity.";
 
+const POLL_MS = 5000;
+
+type IssApiOk = {
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  velocity: number;
+  orbitPastPaths: string[];
+  orbitFuturePaths: string[];
+};
+
+function formatAltitudeKm(km: number) {
+  return `${km.toFixed(1)} km`;
+}
+
+function formatVelocityKmh(kmPerS: number) {
+  return `${(kmPerS * 3600).toFixed(0)} km/h`;
+}
+
 export function ActivityMonitor() {
   const { epochOk, nowMs, events } = useMissionTimelineEvents();
+
+  const [iss, setIss] = useState<IssApiOk | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchIss = useCallback(async () => {
+    try {
+      const res = await fetch(withBasePath(apiPaths.iss), { cache: "no-store" });
+      const data = (await res.json()) as IssApiOk & { error?: string };
+      if (!res.ok || data.error) {
+        setIss(null);
+        setFetchError(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setFetchError(null);
+      setIss({
+        latitude: data.latitude,
+        longitude: data.longitude,
+        altitude: data.altitude,
+        velocity: data.velocity,
+        orbitPastPaths: Array.isArray(data.orbitPastPaths)
+          ? data.orbitPastPaths
+          : [],
+        orbitFuturePaths: Array.isArray(data.orbitFuturePaths)
+          ? data.orbitFuturePaths
+          : [],
+      });
+    } catch {
+      setIss(null);
+      setFetchError("Network error");
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchIss();
+    const id = window.setInterval(() => void fetchIss(), POLL_MS);
+    return () => window.clearInterval(id);
+  }, [fetchIss]);
+
+  const pos =
+    iss != null ? latLonToMapSvg(iss.latitude, iss.longitude) : null;
 
   const descriptionDisplay = useMemo(
     () =>
@@ -81,13 +147,89 @@ export function ActivityMonitor() {
   }, [stationNext, nowMs]);
 
   return (
-    <TitledDashboardPanel title="Activity Monitor" panelId="activity-monitor">
+    <TitledDashboardPanel title="Activity Monitor" panelId="activity-monitor" contentFlush>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+        <div className="relative grid min-h-0 w-full shrink-0 place-items-center overflow-hidden" style={{ minHeight: 180 }}>
+          <img
+            src={withBasePath("/map.svg")}
+            alt="Trajectory map"
+            className="col-start-1 row-start-1 max-h-full max-w-full object-contain object-center"
+          />
+          <svg
+            className="pointer-events-none col-start-1 row-start-1 h-full w-full max-h-full max-w-full"
+            viewBox={`0 0 ${MAP_SVG_WIDTH} ${MAP_SVG_HEIGHT}`}
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden
+          >
+            {iss != null && !fetchError
+              ? iss.orbitPastPaths.map((d, i) => (
+                  <path
+                    key={`p-${i}`}
+                    d={d}
+                    fill="none"
+                    stroke="#5e5e5e"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))
+              : null}
+            {iss != null && !fetchError
+              ? iss.orbitFuturePaths.map((d, i) => (
+                  <path
+                    key={`f-${i}`}
+                    d={d}
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))
+              : null}
+            {iss != null && pos ? (
+              <circle cx={pos.x} cy={pos.y} r="10" fill="#ffffff">
+                <title>
+                  ISS {iss.latitude.toFixed(2)}°, {iss.longitude.toFixed(2)}°
+                </title>
+              </circle>
+            ) : null}
+          </svg>
+        </div>
+
+        <div
+          className="shrink-0 border-t border-solid border-[#eee]/15 px-3 py-2 text-center"
+          aria-live="polite"
+        >
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs sm:text-sm">
+            <span className="text-[#eee]/60">
+              Altitude{" "}
+              <span className="font-mono tabular-nums text-[#eee]">
+                {iss != null && !fetchError
+                  ? formatAltitudeKm(iss.altitude)
+                  : "—"}
+              </span>
+            </span>
+            <span className="text-[#eee]/60">
+              Velocity{" "}
+              <span className="font-mono tabular-nums text-[#eee]">
+                {iss != null && !fetchError
+                  ? formatVelocityKmh(iss.velocity)
+                  : "—"}
+              </span>
+            </span>
+          </div>
+          {fetchError ? (
+            <p className="m-0 mt-1 text-[10px] text-[#eee]/45">{fetchError}</p>
+          ) : null}
+        </div>
+
       {!epochOk ? (
-        <p className={DASHBOARD_PANEL_MUTED_TEXT_CLASS}>
+        <p className={`${DASHBOARD_PANEL_MUTED_TEXT_CLASS} px-4`}>
           Invalid mission epoch in timeline data.
         </p>
       ) : (
-        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto text-left pr-1">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto text-left px-4 pb-4 pr-3">
           <div className="w-full min-w-0">
             <p className="m-0 text-[10px] font-medium uppercase tracking-wider text-[#eee]/55 sm:text-xs">
               Current activity
@@ -183,6 +325,7 @@ export function ActivityMonitor() {
           </div>
         </div>
       )}
+      </div>
     </TitledDashboardPanel>
   );
 }

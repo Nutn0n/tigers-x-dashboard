@@ -4,7 +4,6 @@ import { PumpStatusTable } from "@/components/pump-status-table";
 import { useTelemetry } from "@/components/telemetry-provider";
 import { TelemetryStringValueBox } from "@/components/telemetry-string-value-box";
 import { TitledDashboardPanel } from "@/components/titled-dashboard-panel";
-import { DashboardSchematicImage } from "@/components/dashboard-schematic-image";
 import {
   DASHBOARD_PANEL_SECTION_DIVIDER_CLASS,
   DASHBOARD_PANEL_SECTION_LABEL_CLASS,
@@ -21,19 +20,21 @@ export function Microfludic() {
 
   return (
     <TitledDashboardPanel
-      title="Microfludic Views"
+      title="Experiment Views"
       panelId="microfludic"
       variant="tallStrip"
     >
       <div className={DASHBOARD_PANEL_STACK_CLASS}>
-        <DashboardSchematicImage
-          src="/chip.svg"
-          alt="Microfluidic chip diagram"
-        />
+        <div className="flex w-full justify-center">
+          <img src="/chip.svg" alt="Microfluidic chip diagram" style={{ width: 250, height: "auto" }} />
+        </div>
 
         <PumpStatusTable caption="Pump status" flushTop />
 
         <div className={DASHBOARD_PANEL_SECTION_DIVIDER_CLASS}>
+          <div className="flex w-full justify-center">
+            <img src="/pump.svg" alt="Pump diagram" style={{ width: 250, height: "auto" }} />
+          </div>
           <p className={DASHBOARD_PANEL_SECTION_LABEL_CLASS}>Event & pump</p>
           <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">
             <tbody>
@@ -42,7 +43,7 @@ export function Microfludic() {
                   scope="row"
                   className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
                 >
-                  event_marker
+                  Event Marker
                 </th>
                 <td className="py-1 text-right">
                   <TelemetryStringValueBox
@@ -56,7 +57,7 @@ export function Microfludic() {
                   scope="row"
                   className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
                 >
-                  pump_mode_a
+                  Pump Mode A
                 </th>
                 <td className="py-1 text-right">
                   <TelemetryStringValueBox
@@ -70,7 +71,7 @@ export function Microfludic() {
                   scope="row"
                   className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
                 >
-                  pump_mode_b
+                  Pump Mode B
                 </th>
                 <td className="py-1 text-right">
                   <TelemetryStringValueBox
@@ -84,7 +85,7 @@ export function Microfludic() {
                   scope="row"
                   className="w-[40%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
                 >
-                  fault_code
+                  Fault Code
                 </th>
                 <td className="py-1 text-right">
                   <TelemetryStringValueBox

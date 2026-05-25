@@ -1,10 +1,17 @@
 type TelemetryBooleanChipProps = {
   field: string;
   value: boolean;
+  trueLabel?: string;
+  falseLabel?: string;
 };
 
-export function TelemetryBooleanChip({ field, value }: TelemetryBooleanChipProps) {
-  const label = value ? "True" : "False";
+export function TelemetryBooleanChip({
+  field,
+  value,
+  trueLabel = "True",
+  falseLabel = "False",
+}: TelemetryBooleanChipProps) {
+  const label = value ? trueLabel : falseLabel;
   return (
     <span
       className={`inline-flex min-h-4 min-w-[2.25rem] items-center justify-center rounded px-1 py-px text-[9px] font-medium leading-none ${

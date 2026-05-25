@@ -12,15 +12,9 @@ export const DASHBOARD_TOP_GRID =
 
 export const DASHBOARD_TOP_GRID_CELL = "min-h-0 min-w-0";
 
-/** Microfludic strip + six tiles (two 1fr rows × three columns). */
+/** Three equal columns: Microfludic | Activity Monitor | Telemetry. */
 export const DASHBOARD_QUARTER_OUTER =
-  "mt-6 flex min-h-0 min-w-0 shrink-0 flex-col gap-4 md:mt-8 md:flex-row md:items-start md:gap-6";
-
-export const DASHBOARD_MICRO_COLUMN =
-  "flex min-h-0 w-full shrink-0 flex-col md:w-1/4 md:self-stretch";
-
-export const DASHBOARD_QUARTER_INNER_GRID =
-  "grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 md:min-w-0 md:flex-1 md:grid-cols-3 md:gap-6";
+  "mt-6 grid min-h-0 min-w-0 shrink-0 grid-cols-1 gap-4 md:mt-8 md:grid-cols-3 md:gap-6";
 
 export const DASHBOARD_QUARTER_CELL =
   "flex h-full min-h-0 min-w-0 flex-col overflow-hidden";

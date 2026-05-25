@@ -32,10 +32,10 @@
     {
       "id": "installation",
       "name": "Installation",
-      "type": "operation",
+      "type": "iss-event",
       "start": "2026-05-26T22:15:00.000Z",
       "end": "2026-05-26T23:00:00.000Z",
-      "description": "ISS crew members installed the TIGERS-X experiment module into the ICE Cubes Facility aboard the Columbus laboratory module and initiated initial system checkouts. Following installation, ground teams began verifying telemetry, power, communication links, and experiment status to prepare the payload for operational activities."
+      "description": "ISS crew members installed the TIGERS-X experiment module into the ICE Cubes Facility."
     },
     {
       "id": "task-day-1",

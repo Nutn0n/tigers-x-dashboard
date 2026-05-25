@@ -30,6 +30,17 @@ const PUMP_STATUS_KEYS = [
 
 type PumpStatusKey = (typeof PUMP_STATUS_KEYS)[number];
 
+const PUMP_DISPLAY_NAMES: Record<PumpStatusKey, string> = {
+  PumpStatus1: "Pump Status 1",
+  PumpStatus2: "Pump Status 2",
+  PumpStatus3: "Pump Status 3",
+  PumpStatus4: "Pump Status 4",
+  PumpStatus5: "Pump Status 5",
+  PumpStatus6: "Pump Status 6",
+  PumpStatus7: "Pump Status 7",
+  PumpStatus8: "Pump Status 8",
+};
+
 const PUMP_ROWS = [
   [PUMP_STATUS_KEYS[0], PUMP_STATUS_KEYS[1]],
   [PUMP_STATUS_KEYS[2], PUMP_STATUS_KEYS[3]],
@@ -66,13 +77,13 @@ export function PumpStatusTable({
                   scope="row"
                   className="w-[22%] py-1 pr-1 font-medium text-[#eee]/85 sm:pr-2"
                 >
-                  {key}
+                  {PUMP_DISPLAY_NAMES[key]}
                 </th>,
                 <td
                   key={`${key}-value`}
                   className={`py-1 text-right ${colIndex === 0 ? "pr-2 sm:pr-4" : ""}`}
                 >
-                  <TelemetryBooleanChip field={key} value={snapshot[key]} />
+                  <TelemetryBooleanChip field={key} value={snapshot[key]} trueLabel="Operating" falseLabel="Idle" />
                 </td>,
               ])}
             </tr>
