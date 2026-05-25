@@ -11,8 +11,8 @@ export const ROW_CONFIG = [
 export type RowType = (typeof ROW_CONFIG)[number]["type"];
 
 export const TDRSS_ROW_CONFIG = [
-  { label: "S Band", type: "tdrss-s", color: "#eee" },
-  { label: "KU Band", type: "tdrss-ku", color: "#fff" },
+  { label: "S Band", type: "tdrss-s", color: "#ffffff" },
+  { label: "KU Band", type: "tdrss-ku", color: "rgb(29, 177, 0)" },
 ] as const;
 
 export type TdrssRowType = (typeof TDRSS_ROW_CONFIG)[number]["type"];
