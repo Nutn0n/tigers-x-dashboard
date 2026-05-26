@@ -5,7 +5,7 @@ import type {
 import { PUBLIC_TELEMETRY_API_TOKEN } from "@/lib/telemetry-api-client";
 
 const DEFAULT_BASE_URL = "https://telemetry.ishalab.space";
-const DEFAULT_TARGET = "pm";
+const DEFAULT_TARGET = "fm";
 
 function telemetryBaseUrl(): string {
   return (
