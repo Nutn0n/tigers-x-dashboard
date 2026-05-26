@@ -52,12 +52,15 @@ type FullscreenPanelProps = {
   className?: string;
   /** Min height when not fullscreen (`min-h-0 h-full` when stacked in a flex column). */
   collapseMinHeightClass?: string;
+  /** Extra content rendered only when the panel is in fullscreen mode. */
+  renderWhenExpanded?: ReactNode;
 };
 
 export function FullscreenPanel({
   children,
   className = "",
   collapseMinHeightClass = DASHBOARD_PANEL_BOX_MIN_HEIGHT_CLASS,
+  renderWhenExpanded,
 }: FullscreenPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -107,6 +110,7 @@ export function FullscreenPanel({
           <IconClose />
         </button>
       )}
+      {expanded && renderWhenExpanded ? renderWhenExpanded : null}
       <div
         className={
           expanded

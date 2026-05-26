@@ -34,6 +34,8 @@ import {
   TDRSS_TIMELINE_EVENTS,
   TDRSS_TIMELINE_LAYOUTS,
 } from "@/lib/tdrss-timeline";
+import { tdrssPasses } from "@/data/data-source";
+import { resolveLinkPassStatus } from "@/lib/tdrss-link-pass";
 import { useMissionTimelineScroll } from "@/hooks/use-mission-timeline-scroll";
 
 const FILLED_BAR_CLASS =
@@ -547,8 +549,73 @@ export function Timeline() {
     [],
   );
 
+  const linkPassStatus = useMemo(
+    () => resolveLinkPassStatus(nowMs, tdrssPasses),
+    [nowMs],
+  );
+
+  const aosLosBar = (
+    <div className="mb-3 flex w-full items-center justify-center gap-8">
+      <div className="flex items-center gap-4">
+        <span className="text-xs font-medium uppercase tracking-wide text-[#eee]/60">S-Band</span>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs text-[#eee]/70">
+            AOS
+            <span
+              className="inline-block size-2.5 rounded-full"
+              style={{ backgroundColor: linkPassStatus.sBand.aosActive ? "#22c55e" : "#555" }}
+            />
+          </span>
+          <span className="font-mono text-lg font-medium tabular-nums text-[#eee]">
+            {linkPassStatus.sBand.aosDisplay}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs text-[#eee]/70">
+            LOS
+            <span
+              className="inline-block size-2.5 rounded-full"
+              style={{ backgroundColor: linkPassStatus.sBand.losActive ? "#ef4444" : "#555" }}
+            />
+          </span>
+          <span className="font-mono text-lg font-medium tabular-nums text-[#eee]">
+            {linkPassStatus.sBand.losDisplay}
+          </span>
+        </div>
+      </div>
+      <div className="h-6 w-px bg-[#eee]/20" />
+      <div className="flex items-center gap-4">
+        <span className="text-xs font-medium uppercase tracking-wide text-[#eee]/60">KU-Band</span>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs text-[#eee]/70">
+            AOS
+            <span
+              className="inline-block size-2.5 rounded-full"
+              style={{ backgroundColor: linkPassStatus.kuBand.aosActive ? "#22c55e" : "#555" }}
+            />
+          </span>
+          <span className="font-mono text-lg font-medium tabular-nums text-[#eee]">
+            {linkPassStatus.kuBand.aosDisplay}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs text-[#eee]/70">
+            LOS
+            <span
+              className="inline-block size-2.5 rounded-full"
+              style={{ backgroundColor: linkPassStatus.kuBand.losActive ? "#ef4444" : "#555" }}
+            />
+          </span>
+          <span className="font-mono text-lg font-medium tabular-nums text-[#eee]">
+            {linkPassStatus.kuBand.losDisplay}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <FullscreenPanel className="flex flex-col">
+    <FullscreenPanel className="flex flex-col" renderWhenExpanded={aosLosBar}>
       {tooltipToShow &&
         typeof document !== "undefined" &&
         createPortal(
