@@ -6,7 +6,7 @@ export function Iss() {
   return (
     <FullscreenPanel className="flex flex-col items-center">
       <section
-        className="flex min-h-0 w-full flex-1 flex-col items-center pt-1"
+        className="flex min-h-0 w-full flex-1 flex-col items-center rounded-[10px] border-[1px] border-solid border-[#eeeeee] pt-1"
         aria-labelledby="iss-panel-title"
       >
         <h2 id="iss-panel-title" className={DASHBOARD_PANEL_TITLE_CLASS}>

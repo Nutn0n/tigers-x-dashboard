@@ -50,7 +50,7 @@ const EVENT_ROW_VERTICAL_PADDING_PX = 4;
 const TDRSS_LANE_HEIGHT_PX = 8;
 const TDRSS_LANE_GAP_PX = 2;
 const TDRSS_ROW_VERTICAL_PADDING_PX = 2;
-const TDRSS_BAR_CLASS = "absolute overflow-hidden rounded text-left";
+const TDRSS_BAR_CLASS = "absolute overflow-hidden rounded-[1px] text-left";
 
 function rowTrackHeightPx(layouts: TimelineEventLayout[]) {
   const laneCount = layouts.length > 0 ? layouts[0].laneCount : 1;
@@ -556,7 +556,7 @@ export function Timeline() {
           document.body,
         )}
       <section
-        className="flex min-h-0 flex-1 flex-col rounded-[10px] border border-solid px-4 pt-1 sm:px-6 md:px-10"
+        className="flex min-h-0 flex-1 flex-col rounded-[10px] border-[1px] border-solid border-[#eeeeee] px-4 pt-1 sm:px-6 md:px-10"
         aria-label="Mission timeline"
       >
         <div className="mb-1 flex items-center gap-3">
