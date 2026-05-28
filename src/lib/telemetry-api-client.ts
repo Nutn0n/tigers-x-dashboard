@@ -9,7 +9,7 @@ import type {
 } from "@/lib/telemetry-api-types";
 
 const DEFAULT_BASE_URL = "https://telemetry.ishalab.space";
-const DEFAULT_TARGET = "fm";
+const DEFAULT_TARGET = "pm";
 
 /** Public read token (override via NEXT_PUBLIC_TELEMETRY_API_TOKEN). */
 export const PUBLIC_TELEMETRY_API_TOKEN =
