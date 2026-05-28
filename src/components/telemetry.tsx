@@ -43,6 +43,10 @@ export function Telemetry() {
     connection === "stale" || connection === "unavailable" || connection === "error"
       ? "opacity-60"
       : "";
+  const illuminationPercent = Math.min(
+    100,
+    Math.max(0, Number(snapshot.Torch_Level) || 0),
+  );
 
   return (
     <TitledDashboardPanel title="Telemetry" panelId="telemetry">
@@ -74,8 +78,25 @@ export function Telemetry() {
               >
                 Illumination
               </th>
-              <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
-                {snapshot.Torch_Level}%
+              <td className="py-1">
+                <div className="flex items-center justify-end gap-2">
+                  <div
+                    className="h-2 w-20 overflow-hidden rounded-full bg-[#eee]/15"
+                    role="progressbar"
+                    aria-label="Illumination level"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={illuminationPercent}
+                  >
+                    <div
+                      className="h-full bg-[#eee]"
+                      style={{ width: `${illuminationPercent}%` }}
+                    />
+                  </div>
+                  <span className="font-mono tabular-nums text-[#eee]/90">
+                    {snapshot.Torch_Level}%
+                  </span>
+                </div>
               </td>
             </tr>
             <tr className="border-t border-solid border-[#eee]/10">
