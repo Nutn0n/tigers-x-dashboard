@@ -10,7 +10,7 @@
       "name": "SpX-34 Launch",
       "type": "iss-event",
       "start": "2026-05-15T22:05:00.000Z",
-      "end": "2026-05-15T22:14:22.000Z",
+      "end": "2026-05-15T22:05:00.000Z",
       "description": "SpaceX is targeting Friday, May 15, for Falcon 9’s launch of Dragon’s 34th Commercial Resupply Services (CRS-34) mission for NASA to the International Space Station from Space Launch Complex 40 (SLC-40) at Cape Canaveral Space Force Station in Florida. Liftoff is targeted for 6:05 p.m. ET."
     },
     {
@@ -18,7 +18,7 @@
       "name": "SpX-34 Dock",
       "type": "iss-event",
       "start": "2026-05-17T11:00:00.000Z",
-      "end": "2026-05-17T11:00:01.000Z",
+      "end": "2026-05-17T11:00:00.000Z",
       "description": "After an approximate 36-hour flight, Dragon will autonomously dock with the orbiting laboratory on Sunday, May 17, at around 7:00 a.m. ET."
     },
     {
@@ -30,36 +30,84 @@
       "description": "A planned orbital maneuver using the engines of the Progress 95 spacecraft to raise the International Space Station’s altitude and maintain its operational orbit."
     },
     {
-      "id": "installation",
-      "name": "Payload Installation",
+      "id": "activation",
+      "name": "Payload Activation",
       "type": "iss-event",
       "start": "2026-05-26T15:10:00.000Z",
-      "end": "2026-05-26T15:20:00.000Z",
+      "end": "2026-05-26T15:10:00.000Z",
       "description": "ISS crew members installed the TIGERS-X experiment module into the ICE Cubes Facility."
     },
     {
-      "id": "Calibration",
-      "name": "Calibration",
-      "type": "iss-event",
-      "start": "2026-05-26T16:38:00.000Z",
-      "end": "2026-05-26T17:20:00.000Z",
+      "id": "day-0-system-calibration",
+      "name": "Day 0 System Calibration",
+      "type": "operation",
+      "start": "2026-05-26T16:30:00.000Z",
+      "end": "2026-05-26T19:30:00.000Z",
       "description": "System Calibration with Space Application Services"
     },
     {
-      "id": "task-day-1",
-      "name": "Task Day 1",
+      "id": "day-2-system-check-1",
+      "name": "Day 2 System Check 1",
       "type": "operation",
-      "start": "2026-05-27T02:30:00.000Z",
-      "end": "2026-05-27T03:00:00.000Z",
-      "description": "The first day of TIGERS-X experiment operations began with real experiment runs on Channel 1 and Channel 3. Teams monitored payload performance, fluid behavior, telemetry, and command responses during the operational sequence."
+      "start": "2026-05-28T03:58:00.000Z",
+      "end": "2026-05-28T04:21:00.000Z",
+      "description": ""
     },
     {
-      "id": "task-day-2",
-      "name": "Task Day 2",
+      "id": "day-2-system-check-2",
+      "name": "Day 2 System Check 2",
       "type": "operation",
-      "start": "2026-05-28T02:30:00.000Z",
-      "end": "2026-05-28T03:10:00.000Z",
-      "description": "The second day of TIGERS-X experiment operations began with real experiment runs on Channel 2 and Channel 4. Teams monitored payload performance, fluid behavior, telemetry, and command responses during the operational sequence."
-    }
+      "start": "2026-05-28T05:57:00.000Z",
+      "end": "2026-05-28T06:07:00.000Z",
+      "description": ""
+    }, 
+    {
+      "id": "day-2-science-operation-1",
+      "name": "Day 2 Science Operation 1",
+      "type": "operation",
+      "start": "2026-05-28T06:08:00.000Z",
+      "end": "2026-05-28T06:35:00.000Z",
+      "description": ""
+    },
+    {
+      "id": "day-2-science-operation-2",
+      "name": "Day 2 Science Operation 2",
+      "type": "operation",
+      "start": "2026-05-28T06:37:00.000Z",
+      "end": "2026-05-28T07:06:00.000Z",
+      "description": ""
+    }, 
+    {
+      "id": "day-2-science-operation-3",
+      "name": "Day 2 Science Operation 3",
+      "type": "operation",
+      "start": "2026-05-28T07:07:00.000Z",
+      "end": "2026-05-28T07:48:00.000Z",
+      "description": ""
+    }, 
+    {
+      "id": "spacial-event-minister-visit",
+      "name": "Special Event Minister Yodchanan Wongsawat Visit",
+      "type": "iss-event",
+      "start": "2026-05-29T00:45:00.000Z",
+      "end": "2026-05-29T02:00:00.000Z",
+      "description": "Minister Yodchanan Wongsawat visits the TIGERS-X Mission Control Room."
+    }, 
+    {
+      "id": "expedition-74-eva-2",
+      "name": "Expedition 74 EVA 2",
+      "type": "iss-event",
+      "start": "2026-05-27T07:18:00.000Z",
+      "end": "2026-05-27T13:23:00.000Z",
+      "description": "Kud-Sverchkov and Mikayev ventured out and installed Solntse-Teragerts, which is a solar radiation experiment on the Zvezda Service Module, removed and replaced a cassette in the Ekran-M payload on the Nauka Module, removed Biorisk from Poisk, and photographed one of the Progress 94 cargo spacecraft’s Kurs rendezvous antennas that failed to deploy in March following its launch to the space station and secure it with wire ties."
+    },
+    {
+      "id": "cube-deactivation",
+      "name": "Experiment Cube Deactivation",
+      "type": "iss-event",
+      "start": "2026-06-05T09:40:00.000Z",
+      "end": "2026-06-05T09:40:00.000Z",
+      "description": "The Conclusion of the TIGERS-X Experiment"
+    } 
   ]
 }
