@@ -24,7 +24,6 @@ import type {
 import {
   applyTargetSnapshot,
   createDefaultTelemetrySnapshot,
-  isStale,
   mergeTelemetryUpdate,
 } from "@/lib/telemetry-normalize";
 import type {
@@ -35,9 +34,14 @@ import type {
 } from "@/lib/telemetry";
 
 const POLL_MS = 2000;
-const STALE_MS = 5000;
 const STREAM_SILENCE_MS = 5000;
 const RECONNECT_MS = 2000;
+/** TM_Counter must change within this window to stay connected. */
+const EPOCH_STALE_MS = 5000;
+
+const TELEMETRY_REST_ENABLED = true;
+/** Set false to use REST polling only (no WebSocket). */
+const TELEMETRY_WEBSOCKET_ENABLED = false;
 
 type TelemetryContextValue = TelemetryLiveState;
 
@@ -55,16 +59,16 @@ function healthSummaryFromResponse(
   };
 }
 
-function resolveConnection(
-  health: TelemetryHealthSummary | null,
-  lastReceivedAt: string | null,
-  fetchFailed: boolean,
+function resolveConnection(hasReceivedData: boolean): TelemetryConnectionState {
+  return hasReceivedData ? "connected" : "disconnected";
+}
+
+function isEpochRunning(
+  tmCounterChangedAt: number | null,
   now: Date,
-): TelemetryConnectionState {
-  if (fetchFailed) return "error";
-  if (!health?.connected) return "unavailable";
-  if (isStale(lastReceivedAt, now, STALE_MS)) return "stale";
-  return "connected";
+): boolean {
+  if (tmCounterChangedAt == null) return false;
+  return now.getTime() - tmCounterChangedAt <= EPOCH_STALE_MS;
 }
 
 export function TelemetryProvider({ children }: { children: ReactNode }) {
@@ -75,13 +79,19 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
   const [lastReceivedAt, setLastReceivedAt] = useState<string | null>(null);
   const [health, setHealth] = useState<TelemetryHealthSummary | null>(null);
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [wsOpen, setWsOpen] = useState(false);
+  const [wsError, setWsError] = useState(false);
+  const [hasReceivedData, setHasReceivedData] = useState(false);
+  const [tmCounterChangedAt, setTmCounterChangedAt] = useState<number | null>(
+    null,
+  );
   const [now, setNow] = useState(() => new Date());
 
   const snapshotRef = useRef(snapshot);
+  const lastTmCounterRef = useRef<number | null>(null);
   const lastStreamAtRef = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pollOnlyRef = useRef(false);
   const openWebSocketRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -93,16 +103,28 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, []);
 
+  const commitSnapshot = useCallback(
+    (next: TelemetrySnapshot, received: string | null) => {
+      snapshotRef.current = next;
+      setSnapshot(next);
+      if (received) setLastReceivedAt(received);
+      setHasReceivedData(true);
+      setFetchFailed(false);
+      if (lastTmCounterRef.current !== next.TM_Counter) {
+        lastTmCounterRef.current = next.TM_Counter;
+        setTmCounterChangedAt(Date.now());
+      }
+    },
+    [],
+  );
+
   const applyLatest = useCallback((data: TelemetryLatestResponse) => {
     const { snapshot: next, lastReceivedAt: received } = applyTargetSnapshot(
       snapshotRef.current,
       data.parameters,
     );
-    snapshotRef.current = next;
-    setSnapshot(next);
-    if (received) setLastReceivedAt(received);
-    setFetchFailed(false);
-  }, []);
+    commitSnapshot(next, received);
+  }, [commitSnapshot]);
 
   const fetchHealth = useCallback(async (): Promise<TelemetryHealthSummary | null> => {
     try {
@@ -121,6 +143,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
     try {
       const data = await fetchTelemetryLatestClient(target);
       applyLatest(data);
+      lastStreamAtRef.current = Date.now();
     } catch {
       setFetchFailed(true);
     }
@@ -129,6 +152,8 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
   const handleWsMessage = useCallback(
     (msg: WsMessage) => {
       lastStreamAtRef.current = Date.now();
+      setWsError(false);
+      setFetchFailed(false);
       if (msg.type === "snapshot") {
         const targetParams = msg.targets[target];
         if (!targetParams) return;
@@ -136,9 +161,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
           snapshotRef.current,
           targetParams,
         );
-        snapshotRef.current = next;
-        setSnapshot(next);
-        if (received) setLastReceivedAt(received);
+        commitSnapshot(next, received);
         return;
       }
       if (msg.type === "telemetry_update" && msg.target === target) {
@@ -146,12 +169,10 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
           snapshotRef.current,
           msg.parameters,
         );
-        snapshotRef.current = next;
-        setSnapshot(next);
-        if (received) setLastReceivedAt(received);
+        commitSnapshot(next, received);
       }
     },
-    [target],
+    [commitSnapshot, target],
   );
 
   const closeWebSocket = useCallback(() => {
@@ -159,24 +180,33 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
       wsRef.current.close();
       wsRef.current = null;
     }
+    setWsOpen(false);
   }, []);
 
   const scheduleReconnect = useCallback(() => {
     closeWebSocket();
-    pollOnlyRef.current = true;
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     reconnectTimerRef.current = setTimeout(() => {
-      pollOnlyRef.current = false;
-      void fetchLatest().then(() => openWebSocketRef.current());
+      if (TELEMETRY_REST_ENABLED) {
+        void fetchLatest().then(() => openWebSocketRef.current());
+      } else {
+        openWebSocketRef.current();
+      }
     }, RECONNECT_MS);
   }, [closeWebSocket, fetchLatest]);
 
   const openWebSocket = useCallback(() => {
-    if (pollOnlyRef.current) return;
+    if (!TELEMETRY_WEBSOCKET_ENABLED) return;
     closeWebSocket();
 
     const ws = new WebSocket(telemetryWebSocketUrlClient());
     wsRef.current = ws;
+
+    ws.onopen = () => {
+      setWsOpen(true);
+      setWsError(false);
+      lastStreamAtRef.current = Date.now();
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -188,10 +218,12 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
     };
 
     ws.onerror = () => {
+      setWsError(true);
       scheduleReconnect();
     };
 
     ws.onclose = () => {
+      setWsOpen(false);
       if (wsRef.current === ws) {
         scheduleReconnect();
       }
@@ -207,48 +239,73 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
 
     async function bootstrap() {
       lastStreamAtRef.current = Date.now();
-      await fetchHealth();
-      if (cancelled) return;
-      await fetchLatest();
-      if (cancelled) return;
-      openWebSocket();
+      if (TELEMETRY_REST_ENABLED) {
+        await fetchHealth();
+        if (cancelled) return;
+        await fetchLatest();
+        if (cancelled) return;
+      }
+      if (TELEMETRY_WEBSOCKET_ENABLED) {
+        openWebSocket();
+      }
     }
 
     void bootstrap();
 
-    const healthId = window.setInterval(() => {
-      void fetchHealth();
-    }, POLL_MS * 2);
+    const healthId = TELEMETRY_REST_ENABLED
+      ? window.setInterval(() => {
+          void fetchHealth();
+        }, POLL_MS * 2)
+      : undefined;
 
-    const pollId = window.setInterval(() => {
-      const silent = Date.now() - lastStreamAtRef.current > STREAM_SILENCE_MS;
-      if (pollOnlyRef.current || silent) {
-        void fetchLatest();
-      }
-    }, POLL_MS);
+    const pollId = TELEMETRY_REST_ENABLED
+      ? window.setInterval(() => {
+          if (TELEMETRY_WEBSOCKET_ENABLED) {
+            const silent =
+              Date.now() - lastStreamAtRef.current > STREAM_SILENCE_MS;
+            if (!silent) return;
+          }
+          void fetchLatest();
+        }, POLL_MS)
+      : undefined;
 
     return () => {
       cancelled = true;
-      window.clearInterval(healthId);
-      window.clearInterval(pollId);
+      if (healthId !== undefined) window.clearInterval(healthId);
+      if (pollId !== undefined) window.clearInterval(pollId);
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      closeWebSocket();
+      if (TELEMETRY_WEBSOCKET_ENABLED) closeWebSocket();
     };
   }, [closeWebSocket, fetchHealth, fetchLatest, openWebSocket]);
 
   const connection = useMemo(
-    () => resolveConnection(health, lastReceivedAt, fetchFailed, now),
-    [health, lastReceivedAt, fetchFailed, now],
+    () => resolveConnection(hasReceivedData),
+    [hasReceivedData],
   );
+
+  const epochRunning = useMemo(
+    () => isEpochRunning(tmCounterChangedAt, now),
+    [tmCounterChangedAt, now],
+  );
+
+  const healthForUi = useMemo((): TelemetryHealthSummary | null => {
+    if (TELEMETRY_REST_ENABLED) return health;
+    return {
+      connected: wsOpen,
+      lastError: wsError ? "WebSocket error" : null,
+      lastMessageAt: lastReceivedAt,
+    };
+  }, [health, wsOpen, wsError, lastReceivedAt]);
 
   const value = useMemo<TelemetryContextValue>(
     () => ({
       snapshot,
       connection,
+      epochRunning,
       lastReceivedAt,
-      health,
+      health: healthForUi,
     }),
-    [snapshot, connection, lastReceivedAt, health],
+    [snapshot, connection, epochRunning, lastReceivedAt, healthForUi],
   );
 
   return (

@@ -134,6 +134,30 @@
       "description": "Minister Yodchanan Wongsawat visits the TIGERS-X Mission Control Room."
     }, 
     {
+      "id": "clear-mission-control-for-science-operation",
+      "name": "Clear Mission Control for Science Operation",
+      "type": "iss-event",
+      "start": "2026-05-29T03:39:00.000Z",
+      "end": "2026-05-29T03:39:00.000Z",
+      "description": ""
+    },
+    {
+      "id": "day-3-system-check-1",
+      "name": "Day 3 System Check 1",
+      "type": "operation",
+      "start": "2026-05-29T00:45:00.000Z",
+      "end": "2026-05-29T02:00:00.000Z",
+      "description": ""
+    },
+    {
+      "id": "day-3-science-opeation-1",
+      "name": "Day 3 Science Opeartion 1",
+      "type": "operation",
+      "start": "2026-05-29T04:03:00.000Z",
+      "end": "2026-05-29T08:01:00.000Z",
+      "description": ""
+    },
+    {
       "id": "expedition-74-eva-2",
       "name": "Expedition 74 EVA 2",
       "type": "iss-event",

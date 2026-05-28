@@ -38,12 +38,8 @@ const CAM_ROWS = [
 ] as const satisfies ReadonlyArray<readonly [CamStatusKey, CamStatusKey]>;
 
 export function Telemetry() {
-  const { snapshot, connection } = useTelemetry();
-  const isLive = connection === "connected";
-  const staleClass =
-    connection === "stale" || connection === "unavailable" || connection === "error"
-      ? "opacity-60"
-      : "";
+  const { snapshot, epochRunning } = useTelemetry();
+  const epochLabel = epochRunning ? `${snapshot.TM_Counter}s` : "—";
   const illuminationPercent = Math.min(
     100,
     Math.max(0, Number(snapshot.Torch_Level) || 0),
@@ -57,14 +53,11 @@ export function Telemetry() {
           <img
             src="/payload.svg"
             alt="Payload diagram"
-            className={isLive ? "" : "opacity-40"}
             style={{ width: 250, height: "auto" }}
           />
         </div>
 
-        <table
-          className={`w-full table-fixed border-collapse text-left text-[11px] sm:text-xs ${staleClass}`}
-        >
+        <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">
           <tbody>
             <tr className="border-t border-solid border-[#eee]/10 first:border-t-0">
               <th
@@ -74,7 +67,7 @@ export function Telemetry() {
                 Telemetry Epoch
               </th>
               <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
-                {snapshot.TM_Counter}s
+                {epochLabel}
               </td>
             </tr>
             <tr className="border-t border-solid border-[#eee]/10">
@@ -136,7 +129,6 @@ export function Telemetry() {
             <img
               src="/camera.svg"
               alt="Camera diagram"
-              className={isLive ? "" : "opacity-40"}
               style={{ width: 250, height: "auto" }}
             />
           </div>

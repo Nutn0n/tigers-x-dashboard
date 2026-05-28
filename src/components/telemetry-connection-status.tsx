@@ -4,17 +4,13 @@ import { useTelemetry } from "@/components/telemetry-provider";
 import type { TelemetryConnectionState } from "@/lib/telemetry";
 
 const STATE_LABEL: Record<TelemetryConnectionState, string> = {
-  connected: "Live",
-  stale: "Stale",
-  unavailable: "Unavailable",
-  error: "Error",
+  connected: "Connected",
+  disconnected: "Disconnected",
 };
 
 const STATE_COLOR: Record<TelemetryConnectionState, string> = {
   connected: "#22c55e",
-  stale: "#eab308",
-  unavailable: "#6b7280",
-  error: "#ef4444",
+  disconnected: "#6b7280",
 };
 
 export function TelemetryConnectionStatus() {

@@ -99,11 +99,7 @@ export function createDefaultTelemetrySnapshot(): TelemetrySnapshot {
   };
 }
 
-export type TelemetryConnectionState =
-  | "connected"
-  | "stale"
-  | "unavailable"
-  | "error";
+export type TelemetryConnectionState = "connected" | "disconnected";
 
 export type TelemetryHealthSummary = {
   connected: boolean;
@@ -114,6 +110,8 @@ export type TelemetryHealthSummary = {
 export type TelemetryLiveState = {
   snapshot: TelemetrySnapshot;
   connection: TelemetryConnectionState;
+  /** True when Telemetry Epoch (TM_Counter) is advancing. */
+  epochRunning: boolean;
   lastReceivedAt: string | null;
   health: TelemetryHealthSummary | null;
 };
