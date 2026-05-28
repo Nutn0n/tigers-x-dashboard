@@ -39,6 +39,7 @@ const CAM_ROWS = [
 
 export function Telemetry() {
   const { snapshot, connection } = useTelemetry();
+  const isLive = connection === "connected";
   const staleClass =
     connection === "stale" || connection === "unavailable" || connection === "error"
       ? "opacity-60"
@@ -53,7 +54,12 @@ export function Telemetry() {
       <div className={DASHBOARD_PANEL_STACK_CLASS}>
         <TelemetryConnectionStatus />
         <div className="flex w-full justify-center">
-          <img src="/payload.svg" alt="Payload diagram" style={{ width: 250, height: "auto" }} />
+          <img
+            src="/payload.svg"
+            alt="Payload diagram"
+            className={isLive ? "" : "opacity-40"}
+            style={{ width: 250, height: "auto" }}
+          />
         </div>
 
         <table
@@ -130,6 +136,7 @@ export function Telemetry() {
             <img
               src="/camera.svg"
               alt="Camera diagram"
+              className={isLive ? "" : "opacity-40"}
               style={{ width: 250, height: "auto" }}
             />
           </div>

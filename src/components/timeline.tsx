@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FullscreenPanel } from "@/components/FullscreenPanel";
 import { useMissionDataSource } from "@/components/data-source-provider";
-import { formatBangkokDdMmYyHhMmSs } from "@/lib/dashboard-time";
+import { formatBangkokDdMmYyHhMmSs, formatGmtYearElapsed } from "@/lib/dashboard-time";
 import { DASHBOARD_PANEL_TITLE_CLASS } from "@/lib/dashboard-panel-styles";
 import {
   BASE_PX_PER_HOUR,
@@ -152,10 +152,11 @@ const TimelineEventBar = memo(function TimelineEventBar({
   if (
     !Number.isFinite(startMs) ||
     !Number.isFinite(endMs) ||
-    endMs <= startMs
+    endMs < startMs
   ) {
     return null;
   }
+  const isPointEvent = endMs === startMs;
   const startText = formatBangkokDdMmYyHhMmSs(new Date(startMs));
   const endText = formatBangkokDdMmYyHhMmSs(new Date(endMs));
   const { left, width } = barLeftWidthPx(
@@ -178,6 +179,58 @@ const TimelineEventBar = memo(function TimelineEventBar({
   const barTop =
     EVENT_ROW_VERTICAL_PADDING_PX +
     layout.lane * (EVENT_LANE_HEIGHT_PX + EVENT_LANE_GAP_PX);
+
+  if (isPointEvent) {
+    const markerLeft = (startMs - timelineStartMs) * pxPerMs;
+    const markerColorStyle = barFillBackgroundStyle(rowType);
+    return (
+      <div
+        className="absolute flex items-center"
+        style={{
+          top: barTop,
+          left: markerLeft,
+          height: EVENT_LANE_HEIGHT_PX,
+        }}
+        aria-label={`${ev.name}. Start: ${startText}. End: ${endText}.`}
+        onPointerEnter={(e) => {
+          clearHideTimer();
+          onHoverChange?.({
+            id: ev.id,
+            title: ev.name,
+            startLabel: "Start",
+            endLabel: "End",
+            startText,
+            endText,
+            anchor: e.currentTarget.getBoundingClientRect(),
+            capturedZoom: zoom,
+          });
+        }}
+        onPointerLeave={() => {
+          clearHideTimer();
+          leaveHideTimerRef.current = setTimeout(() => {
+            onHoverChange?.(null);
+            leaveHideTimerRef.current = null;
+          }, 120);
+        }}
+      >
+        <span
+          className="block size-[10px] shrink-0 border border-solid border-black/30"
+          style={{
+            transform: "rotate(45deg)",
+            ...(markerColorStyle.backgroundColor
+              ? { backgroundColor: markerColorStyle.backgroundColor }
+              : {}),
+            ...(markerColorStyle.backgroundImage
+              ? { backgroundImage: markerColorStyle.backgroundImage }
+              : {}),
+          }}
+        />
+        <span className="ml-2 block max-w-[16rem] truncate text-[10px] font-medium leading-tight text-[#eee] sm:text-xs">
+          {ev.name}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -553,9 +606,23 @@ export function Timeline() {
     () => resolveLinkPassStatus(nowMs, tdrssPasses),
     [nowMs],
   );
+  const gmtElapsed = useMemo(
+    () => formatGmtYearElapsed(new Date(nowMs > 0 ? nowMs : Date.now())),
+    [nowMs],
+  );
 
   const aosLosBar = (
-    <div className="mb-3 flex w-full items-center justify-center gap-8">
+    <div className="mb-3 flex w-full flex-col items-center gap-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-[#eee]/60">
+          GMT
+        </span>
+        <span className="font-mono text-lg font-medium tabular-nums text-[#eee]">
+          {gmtElapsed}
+        </span>
+        <span className="text-[10px] text-[#eee]/50">DDD:HH:MM:SS</span>
+      </div>
+      <div className="flex w-full items-center justify-center gap-8">
       <div className="flex items-center gap-4">
         <span className="text-xs font-medium uppercase tracking-wide text-[#eee]/60">S-Band</span>
         <div className="flex items-center gap-3">
@@ -610,6 +677,7 @@ export function Timeline() {
             {linkPassStatus.kuBand.losDisplay}
           </span>
         </div>
+      </div>
       </div>
     </div>
   );

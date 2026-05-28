@@ -16,7 +16,8 @@ function faultCodeToDisplayString(code: string | number): string {
 }
 
 export function Microfludic() {
-  const { snapshot } = useTelemetry();
+  const { snapshot, connection } = useTelemetry();
+  const isLive = connection === "connected";
 
   return (
     <TitledDashboardPanel
@@ -26,14 +27,24 @@ export function Microfludic() {
     >
       <div className={DASHBOARD_PANEL_STACK_CLASS}>
         <div className="flex w-full justify-center">
-          <img src="/chip.svg" alt="Microfluidic chip diagram" style={{ width: 250, height: "auto" }} />
+          <img
+            src="/chip.svg"
+            alt="Microfluidic chip diagram"
+            className={isLive ? "" : "opacity-40"}
+            style={{ width: 250, height: "auto" }}
+          />
         </div>
 
         <PumpStatusTable caption="Pump status" flushTop />
 
         <div className={DASHBOARD_PANEL_SECTION_DIVIDER_CLASS}>
           <div className="flex w-full justify-center">
-            <img src="/pump.svg" alt="Pump diagram" style={{ width: 250, height: "auto" }} />
+            <img
+              src="/pump.svg"
+              alt="Pump diagram"
+              className={isLive ? "" : "opacity-40"}
+              style={{ width: 250, height: "auto" }}
+            />
           </div>
           <p className={DASHBOARD_PANEL_SECTION_LABEL_CLASS}>Event & pump</p>
           <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs">

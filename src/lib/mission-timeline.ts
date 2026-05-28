@@ -205,7 +205,7 @@ export function bucketEventsByRow(
 
 /**
  * Assign non-overlapping vertical lanes for simultaneous events in one row.
- * Events with invalid ranges are ignored.
+ * Events with invalid ranges are ignored. Point events (`start === end`) are allowed.
  */
 export function layoutEventsInRow(
   source: TimelineEvent[],
@@ -220,7 +220,7 @@ export function layoutEventsInRow(
       (x) =>
         Number.isFinite(x.startMs) &&
         Number.isFinite(x.endMs) &&
-        x.endMs > x.startMs,
+        x.endMs >= x.startMs,
     )
     .sort((a, b) => {
       if (a.startMs !== b.startMs) return a.startMs - b.startMs;
@@ -316,7 +316,10 @@ export function visibleTimeRangeMs(
   return { startMs, endMs };
 }
 
-/** Keep layouts whose pass interval intersects [startMs, endMs). */
+/**
+ * Keep layouts whose interval intersects [startMs, endMs).
+ * Point events (`start === end`) are visible only when their timestamp is in range.
+ */
 export function filterLayoutsInTimeRange(
   layouts: TimelineEventLayout[],
   startMs: number,
@@ -328,9 +331,12 @@ export function filterLayoutsInTimeRange(
     if (
       !Number.isFinite(passStart) ||
       !Number.isFinite(passEnd) ||
-      passEnd <= passStart
+      passEnd < passStart
     ) {
       return false;
+    }
+    if (passEnd === passStart) {
+      return passStart >= startMs && passStart < endMs;
     }
     return passEnd > startMs && passStart < endMs;
   });
