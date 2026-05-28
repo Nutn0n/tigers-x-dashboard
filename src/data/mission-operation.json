@@ -46,6 +46,38 @@
       "description": "System Calibration with Space Application Services"
     },
     {
+      "id": "day-1-system-check-1",
+      "name": "Day 1 System Check 1",
+      "type": "operation",
+      "start": "2026-05-27T03:53:00.000Z",
+      "end": "2026-05-27T04:54:00.000Z",
+      "description": ""
+    },
+    {
+      "id": "day-1-science-opeartion-1",
+      "name": "Day 1 Science Operation 1",
+      "type": "operation",
+      "start": "2026-05-27T10:19:00.000Z",
+      "end": "2026-05-27T12:08:00.000Z",
+      "description": ""
+    },
+    {
+      "id": "day-1-science-opeartion-2",
+      "name": "Day 1 Science Operation 2",
+      "type": "operation",
+      "start": "2026-05-27T12:12:00.000Z",
+      "end": "2026-05-27T13:34:00.000Z",
+      "description": "Observation of Back Flow on Chanel 1"
+    },
+    {
+      "id": "day-1-science-opeartion-3",
+      "name": "Day 1 Science Operation 3",
+      "type": "operation",
+      "start": "2026-05-27T13:35:00.000Z",
+      "end": "2026-05-27T16:13:00.000Z",
+      "description": "Calibrate of Chanel 3"
+    },
+    {
       "id": "day-2-system-check-1",
       "name": "Day 2 System Check 1",
       "type": "operation",
@@ -85,6 +117,14 @@
       "end": "2026-05-28T07:48:00.000Z",
       "description": ""
     }, 
+    {
+      "id": "day-2-science-operation-4",
+      "name": "Day 2 Science Operation 4",
+      "type": "operation",
+      "start": "2026-05-28T09:53:00.000Z",
+      "end": "2026-05-28T14:43:00.000Z",
+      "description": "Downlink" 
+    },
     {
       "id": "spacial-event-minister-visit",
       "name": "Special Event Minister Yodchanan Wongsawat Visit",
