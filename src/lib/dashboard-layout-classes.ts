@@ -2,9 +2,9 @@
 export const DASHBOARD_PAGE_SHELL =
   "flex min-h-0 flex-1 flex-col overflow-hidden bg-[#000] text-[#eee]";
 
-/** Constrained content width under the top bar. */
+/** Full-width scrollable content under the top bar. */
 export const DASHBOARD_CONTENT_MAX =
-  "mx-auto flex min-h-0 w-full max-w-[2000px] flex-1 flex-col overflow-y-auto overscroll-y-contain px-3 pb-8 md:px-4 md:pb-12";
+  "flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-y-contain px-3 pb-8 md:px-4 md:pb-12";
 
 /** ISS (¼) + Timeline (¾). */
 export const DASHBOARD_TOP_GRID =
