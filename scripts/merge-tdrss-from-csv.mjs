@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 /**
- * Merge TDRSS pass windows from a DOY/HH:MM:SS CSV into src/data/tdrss.json
- * for a configurable UTC window (default: DOY 149–153, year 2026).
+ * Merge TDRSS pass windows from a DOY/HH:MM:SS CSV into src/data/tdrss.json.
+ *
+ * Modes:
+ *   Window splice (default): replace passes overlapping DOY 149–153 (May 29 – Jun 2 UTC)
+ *   Tail splice: --from-cutoff ISO — keep passes before cutoff, replace from cutoff onward
  *
  * Usage:
  *   node scripts/merge-tdrss-from-csv.mjs [csvPath] [--dry-run]
+ *   node scripts/merge-tdrss-from-csv.mjs scripts/data/tdrss-doy152-plus.csv --from-cutoff 2026-06-01T00:00:00.000Z
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -18,7 +22,6 @@ const TDRSS_JSON = join(ROOT, "src/data/tdrss.json");
 const YEAR = 2026;
 const WINDOW_START = Date.parse(`${YEAR}-05-29T00:00:00.000Z`);
 const WINDOW_END = Date.parse(`${YEAR}-06-03T00:00:00.000Z`);
-const MIN_START_DOY = 149;
 const MAX_START_DOY = 153;
 
 const DEFAULT_CSV = resolve(
@@ -28,8 +31,24 @@ const DEFAULT_CSV = resolve(
 
 function parseArgs(argv) {
   const dryRun = argv.includes("--dry-run");
-  const csvPath = argv.find((a) => !a.startsWith("-")) ?? DEFAULT_CSV;
-  return { csvPath, dryRun };
+  const cutoffIdx = argv.indexOf("--from-cutoff");
+  const fromCutoffMs =
+    cutoffIdx >= 0 && argv[cutoffIdx + 1]
+      ? Date.parse(argv[cutoffIdx + 1])
+      : null;
+  const csvPath =
+    argv.find(
+      (a, i) =>
+        !a.startsWith("-") &&
+        (cutoffIdx < 0 || i !== cutoffIdx + 1) &&
+        a !== "--from-cutoff",
+    ) ?? DEFAULT_CSV;
+  return {
+    csvPath,
+    dryRun,
+    mode: fromCutoffMs != null && Number.isFinite(fromCutoffMs) ? "tail" : "window",
+    fromCutoffMs,
+  };
 }
 
 /** Parse a single CSV line with quoted fields. */
@@ -103,18 +122,27 @@ function serviceToBand(service) {
   return null;
 }
 
-function overlapsWindow(startMs, endMs) {
-  return endMs > WINDOW_START && startMs < WINDOW_END;
+function overlapsWindow(startMs, endMs, windowStart, windowEnd) {
+  return endMs > windowStart && startMs < windowEnd;
 }
 
-function csvRowOverlapsImportWindow(startToken, endToken, startMs, endMs) {
-  if (!overlapsWindow(startMs, endMs)) return false;
-  const startDoy = startDoyFromToken(startToken);
+function csvRowIncluded(
+  mode,
+  startTok,
+  startMs,
+  endMs,
+  { windowStart, windowEnd, fromCutoffMs },
+) {
+  if (mode === "tail") {
+    return startMs >= fromCutoffMs;
+  }
+  if (!overlapsWindow(startMs, endMs, windowStart, windowEnd)) return false;
+  const startDoy = startDoyFromToken(startTok);
   if (Number.isFinite(startDoy) && startDoy > MAX_START_DOY) return false;
   return true;
 }
 
-function loadCsvPasses(csvPath) {
+function loadCsvPasses(csvPath, mode, cutoffOpts) {
   const text = readFileSync(csvPath, "utf8");
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   const passes = [];
@@ -148,7 +176,7 @@ function loadCsvPasses(csvPath) {
       continue;
     }
 
-    if (!csvRowOverlapsImportWindow(startTok, endTok, startMs, endMs)) continue;
+    if (!csvRowIncluded(mode, startTok, startMs, endMs, cutoffOpts)) continue;
 
     passes.push({ band, start, end });
   }
@@ -164,45 +192,82 @@ function sortPasses(passes) {
   });
 }
 
-function merge(existing, incoming) {
+function mergeWindow(existing, incoming) {
   const kept = existing.filter((p) => {
     const startMs = Date.parse(p.start);
     const endMs = Date.parse(p.end);
-    return !overlapsWindow(startMs, endMs);
+    return !overlapsWindow(startMs, endMs, WINDOW_START, WINDOW_END);
   });
+  return {
+    merged: sortPasses([...kept, ...incoming]),
+    removed: existing.length - kept.length,
+    kept: kept.length,
+    added: incoming.length,
+  };
+}
 
-  const removed = existing.length - kept.length;
-  const merged = sortPasses([...kept, ...incoming]);
-
-  return { merged, removed, added: incoming.length };
+function mergeTail(existing, incoming, fromCutoffMs) {
+  const kept = existing.filter((p) => Date.parse(p.start) < fromCutoffMs);
+  return {
+    merged: sortPasses([...kept, ...incoming]),
+    removed: existing.length - kept.length,
+    kept: kept.length,
+    added: incoming.length,
+  };
 }
 
 function main() {
-  const { csvPath, dryRun } = parseArgs(process.argv.slice(2));
+  const { csvPath, dryRun, mode, fromCutoffMs } = parseArgs(process.argv.slice(2));
 
-  const { passes: incoming, skipped } = loadCsvPasses(csvPath);
+  const cutoffOpts = {
+    windowStart: WINDOW_START,
+    windowEnd: WINDOW_END,
+    fromCutoffMs,
+  };
+
+  const { passes: incoming, skipped } = loadCsvPasses(csvPath, mode, cutoffOpts);
   const existing = JSON.parse(readFileSync(TDRSS_JSON, "utf8"));
-  const { merged, removed, added } = merge(existing, incoming);
 
-  const inWindow = merged.filter((p) => {
-    const s = Date.parse(p.start);
-    const e = Date.parse(p.end);
-    return overlapsWindow(s, e);
-  });
+  const { merged, removed, kept, added } =
+    mode === "tail"
+      ? mergeTail(existing, incoming, fromCutoffMs)
+      : mergeWindow(existing, incoming);
 
   console.log("CSV:", csvPath);
-  console.log("Window:", toIso(WINDOW_START), "→", toIso(WINDOW_END), "(exclusive end)");
-  console.log("CSV rows imported:", added, "(skipped invalid/non-import:", skipped, ")");
-  console.log("Removed from existing (overlap):", removed);
-  console.log("Total passes:", existing.length, "→", merged.length);
-  if (inWindow.length > 0) {
-    console.log("First in window:", inWindow[0]);
-    console.log("Last in window:", inWindow[inWindow.length - 1]);
+  console.log("Mode:", mode);
+  if (mode === "tail") {
+    console.log("Cutoff (keep before):", toIso(fromCutoffMs));
+  } else {
+    console.log("Window:", toIso(WINDOW_START), "→", toIso(WINDOW_END), "(exclusive end)");
   }
+  console.log("CSV rows imported:", added, "(skipped invalid/non-import:", skipped, ")");
+  console.log("Kept from existing:", kept, "(removed:", removed, ")");
+  console.log("Total passes:", existing.length, "→", merged.length);
 
-  const afterWindow = merged.find((p) => Date.parse(p.start) >= WINDOW_END);
-  if (afterWindow) {
-    console.log("First pass after window (unchanged):", afterWindow);
+  if (mode === "tail") {
+    const prefix = merged.filter((p) => Date.parse(p.start) < fromCutoffMs);
+    const tail = merged.filter((p) => Date.parse(p.start) >= fromCutoffMs);
+    if (prefix.length > 0) {
+      console.log("Last kept:", prefix[prefix.length - 1]);
+    }
+    if (tail.length > 0) {
+      console.log("First imported:", tail[0]);
+      console.log("Last imported:", tail[tail.length - 1]);
+    }
+  } else {
+    const inWindow = merged.filter((p) => {
+      const s = Date.parse(p.start);
+      const e = Date.parse(p.end);
+      return overlapsWindow(s, e, WINDOW_START, WINDOW_END);
+    });
+    if (inWindow.length > 0) {
+      console.log("First in window:", inWindow[0]);
+      console.log("Last in window:", inWindow[inWindow.length - 1]);
+    }
+    const afterWindow = merged.find((p) => Date.parse(p.start) >= WINDOW_END);
+    if (afterWindow) {
+      console.log("First pass after window:", afterWindow);
+    }
   }
 
   if (dryRun) {

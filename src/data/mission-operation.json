@@ -166,6 +166,14 @@
       "description": "Kud-Sverchkov and Mikayev ventured out and installed Solntse-Teragerts, which is a solar radiation experiment on the Zvezda Service Module, removed and replaced a cassette in the Ekran-M payload on the Nauka Module, removed Biorisk from Poisk, and photographed one of the Progress 94 cargo spacecraft’s Kurs rendezvous antennas that failed to deploy in March following its launch to the space station and secure it with wire ties."
     },
     {
+      "id": "col-mpcc-connection-outage-june-2",
+      "name": "Connection Outage",
+      "type": "col-mpcc",
+      "start": "2026-06-02T07:00:00.000Z",
+      "end": "2026-06-02T09:00:00.000Z",
+      "description": "2 June 07:00–09:00 GMT (14:00–16:00 GMT+7)."
+    },
+    {
       "id": "cube-deactivation",
       "name": "Experiment Cube Deactivation",
       "type": "iss-event",
