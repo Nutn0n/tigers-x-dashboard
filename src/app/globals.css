@@ -53,6 +53,35 @@
       opacity: 0;
     }
   }
+
+  @keyframes countdown-shake {
+    0%,
+    100% {
+      transform: translateX(0) scale(1);
+    }
+    20% {
+      transform: translateX(-6px) rotate(-1deg) scale(1.02);
+    }
+    40% {
+      transform: translateX(6px) rotate(1deg) scale(1.02);
+    }
+    60% {
+      transform: translateX(-4px) rotate(-0.5deg);
+    }
+    80% {
+      transform: translateX(4px) rotate(0.5deg);
+    }
+  }
+
+  .animate-countdown-shake {
+    animation: countdown-shake 0.45s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-countdown-shake {
+      animation: none;
+    }
+  }
 }
 
 html {
