@@ -177,8 +177,8 @@
       "id": "cube-deactivation",
       "name": "Experiment Cube Deactivation",
       "type": "iss-event",
-      "start": "2026-06-05T08:15:00.000Z",
-      "end": "2026-06-05T08:15:00.000Z",
+      "start": "2026-06-05T07:50:00.000Z",
+      "end": "2026-06-05T07:50:00.000Z",
       "description": "The Conclusion of the TIGERS-X Experiment"
     }, 
     {
