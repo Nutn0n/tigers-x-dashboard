@@ -34,12 +34,12 @@ function createParticles(count: number, width: number, height: number): Particle
   }));
 }
 
-export function ConfettiBurst({ active }: { active: boolean }) {
+export function ConfettiBurst({ burstKey }: { burstKey: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (burstKey <= 0) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -96,9 +96,9 @@ export function ConfettiBurst({ active }: { active: boolean }) {
       window.removeEventListener("resize", resize);
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-  }, [active]);
+  }, [burstKey]);
 
-  if (!active) return null;
+  if (burstKey <= 0) return null;
 
   return (
     <canvas

@@ -111,21 +111,28 @@ function BandRow({
 export function CountdownPage() {
   const now = useEverySecond();
   const nowMs = now.getTime();
-  const remainingMs = TARGET_MS - nowMs;
+  const [forcedEnd, setForcedEnd] = useState(false);
+  const [confettiBurstKey, setConfettiBurstKey] = useState(0);
+  const wasDeactivatedRef = useRef(false);
+
+  const remainingMs = forcedEnd ? 0 : TARGET_MS - nowMs;
   const remainingSec = Math.ceil(Math.max(0, remainingMs) / 1000);
   const isFinalCountdown =
     remainingMs > 0 && remainingMs <= FINAL_COUNTDOWN_SEC * 1000;
   const isDeactivated = remainingMs <= 0;
 
-  const [confettiActive, setConfettiActive] = useState(isDeactivated);
-  const wasDeactivatedRef = useRef(isDeactivated);
-
   useEffect(() => {
     if (isDeactivated && !wasDeactivatedRef.current) {
-      setConfettiActive(true);
+      setConfettiBurstKey((k) => k + 1);
     }
     wasDeactivatedRef.current = isDeactivated;
   }, [isDeactivated]);
+
+  const triggerDeactivation = () => {
+    setForcedEnd(true);
+    setConfettiBurstKey((k) => k + 1);
+    wasDeactivatedRef.current = true;
+  };
 
   const linkStatus = useMemo(
     () => resolveLinkPassStatus(nowMs, tdrssPasses),
@@ -140,7 +147,7 @@ export function CountdownPage() {
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[#000] text-[#eee]">
-      <ConfettiBurst active={confettiActive} />
+      <ConfettiBurst burstKey={confettiBurstKey} />
 
       <header className="flex flex-wrap items-stretch justify-center gap-4 border-b border-solid border-[#eee]/15 px-4 py-6 md:gap-8 md:px-8">
         <div className="flex min-w-[12rem] flex-col items-center justify-center rounded-[10px] bg-[#000] px-4 py-3 text-center">
@@ -168,8 +175,10 @@ export function CountdownPage() {
           {getCubeDeactivationLabel()}
         </h1>
 
-        <div
-          className={`mt-8 tabular-nums leading-none ${
+        <button
+          type="button"
+          onClick={triggerDeactivation}
+          className={`mt-8 cursor-pointer border-0 bg-transparent p-0 tabular-nums leading-none transition-opacity hover:opacity-90 ${
             isFinalCountdown
               ? "animate-countdown-shake text-[clamp(5rem,22vw,14rem)] font-bold text-[#eab308]"
               : isDeactivated
@@ -178,9 +187,14 @@ export function CountdownPage() {
           }`}
           aria-live="polite"
           aria-atomic="true"
+          aria-label={
+            isDeactivated
+              ? "Payload deactivated. Click to celebrate again."
+              : "Countdown to payload deactivation. Click to skip to deactivation."
+          }
         >
           {mainDisplay}
-        </div>
+        </button>
 
         {!isDeactivated && !isFinalCountdown && (
           <p className="mt-4 text-xs uppercase tracking-wider text-[#eee]/50 sm:text-sm">
