@@ -38,8 +38,7 @@ const CAM_ROWS = [
 ] as const satisfies ReadonlyArray<readonly [CamStatusKey, CamStatusKey]>;
 
 export function Telemetry() {
-  const { snapshot, epochRunning } = useTelemetry();
-  const epochLabel = epochRunning ? `${snapshot.TM_Counter}s` : "—";
+  const { snapshot } = useTelemetry();
   const illuminationPercent = Math.min(
     100,
     Math.max(0, Number(snapshot.Torch_Level) || 0),
@@ -67,7 +66,7 @@ export function Telemetry() {
                 Telemetry Epoch
               </th>
               <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
-                {epochLabel}
+                {snapshot.TM_Counter}s
               </td>
             </tr>
             <tr className="border-t border-solid border-[#eee]/10">
@@ -106,7 +105,7 @@ export function Telemetry() {
                 Temperature
               </th>
               <td className="py-1 text-right font-mono tabular-nums text-[#eee]/90">
-                {snapshot.Temperature}°C
+                Unavailable
               </td>
             </tr>
             <tr className="border-t border-solid border-[#eee]/10">
@@ -128,8 +127,9 @@ export function Telemetry() {
           <div className="flex w-full justify-center">
             <img
               src="/camera.svg"
-              alt="Camera diagram"
-              style={{ width: 250, height: "auto" }}
+            alt="Camera diagram"
+            loading="lazy"
+            style={{ width: 250, height: "auto" }}
             />
           </div>
           <p className={DASHBOARD_PANEL_SECTION_LABEL_CLASS}>Camera status</p>

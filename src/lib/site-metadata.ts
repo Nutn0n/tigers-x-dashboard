@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-const SITE_TITLE = "TIGERS-X Mission Control Viewer";
+const SITE_TITLE = "TIGERS-X Mission Archive";
 
 const SITE_DESCRIPTION =
-  "Dashboard for Thailand Innovative G-force varied Emulsification Research for Space Exploration experiments aboard the International Space Station";
+  "Archived mission dashboard for the TIGERS-X payload aboard the International Space Station — timeline, link passes, and operations frozen at experiment cube deactivation.";
 
 /** Absolute URL for social crawlers (Facebook, etc.); must stay publicly reachable. */
 const OPENGRAPH_IMAGE_URL =
@@ -29,7 +29,7 @@ export function createRootMetadata(): Metadata {
     openGraph: {
       type: "website",
       locale: "en_US",
-      siteName: "TIGERS-X Mission Control",
+      siteName: "TIGERS-X Mission Archive",
       url: "/",
       title,
       description,

@@ -1,8 +1,6 @@
 /**
  * Link pass status types for S-Band and KU-Band AOS/LOS display.
- *
- * Live values come from `src/data/tdrss.json` via `resolveLinkPassStatus` in
- * `src/lib/tdrss-link-pass.ts`.
+ * Archive mode uses fixed placeholder values (`00:00:00`).
  */
 
 export type LinkPassBandId = "s-band" | "ku-band";

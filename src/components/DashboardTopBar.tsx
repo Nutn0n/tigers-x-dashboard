@@ -3,7 +3,6 @@
 import Image from "next/image";
 import {
   useEffect,
-  useMemo,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -34,14 +33,13 @@ import {
   LOGO_FRAME,
   MET_TILE_EXTRA,
   SELECT,
-  TILE_MY,
   TIMEZONE_SLOT_INDICES,
   TZ_TILE_EXTRA,
   tile,
 } from "@/lib/dashboard-top-bar-styles";
-import { tdrssPasses } from "@/data/data-source";
 import type { LinkPassEndpoint, LinkPassStatusSnapshot } from "@/lib/link-pass-status";
-import { resolveLinkPassStatus } from "@/lib/tdrss-link-pass";
+import { PLACEHOLDER_LINK_PASS_STATUS } from "@/lib/link-pass-status";
+import { archiveNowDate } from "@/lib/archive-time";
 
 function useEverySecond(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -104,7 +102,7 @@ function BrandedImageSlot({
         src={withBasePath(src)}
         alt={alt}
         fill
-        className="object-contain object-left px-2"
+        className="object-contain object-center px-2"
         sizes={sizes}
         priority
       />
@@ -146,7 +144,8 @@ function LocalTimeColumns({
 }) {
   return (
     <div className={tile(TZ_TILE_EXTRA)}>
-      <div className="grid min-w-0 w-full grid-cols-3 justify-items-center gap-x-1 text-center sm:gap-x-2 md:gap-x-3">
+      <div className="flex w-full items-center">
+        <div className="grid min-w-0 w-full grid-cols-3 justify-items-center gap-x-1 text-center sm:gap-x-2 md:gap-x-3">
         {TIMEZONE_SLOT_INDICES.map((slot) => {
           const choiceId = timezoneSlots[slot];
           const iana = ianaForTimezoneChoiceId(choiceId);
@@ -188,12 +187,22 @@ function LocalTimeColumns({
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );
 }
 
 const TOPBAR_COLLAPSED_KEY = "dashboard-topbar-collapsed";
+
+function readTopBarCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(TOPBAR_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function ChevronDownIcon({ className }: { className?: string }) {
   return (
@@ -254,6 +263,9 @@ function MetTile({ now }: { now: Date }) {
         {met}
       </span>
       <span className="w-full text-xs text-[#eee]/60 sm:text-sm">ddd:hh:mm:ss</span>
+      <span className="w-full text-[10px] font-medium uppercase tracking-wider text-[#eee]/45 sm:text-xs">
+        End of Mission
+      </span>
     </div>
   );
 }
@@ -313,7 +325,7 @@ function BandLinkRow({
 function LinkPassTile({ status }: { status: LinkPassStatusSnapshot }) {
   return (
     <div className={tile(AOS_LOS_TILE_EXTRA)}>
-      <div className="flex w-full flex-col gap-3 py-0.5">
+      <div className="flex w-full flex-col justify-center gap-3 py-0.5">
         <BandLinkRow bandLabel="S-Band" endpoint={status.sBand} />
         <BandLinkRow bandLabel="KU-Band" endpoint={status.kuBand} />
       </div>
@@ -326,17 +338,7 @@ export function DashboardTopBar() {
   const [timezoneSlots, setTimezoneSlots] = useState<TimezoneSlotTuple>(
     DEFAULT_TIMEZONE_SLOTS,
   );
-  const [topBarCollapsed, setTopBarCollapsed] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(TOPBAR_COLLAPSED_KEY) === "1") {
-        setTopBarCollapsed(true);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const [topBarCollapsed, setTopBarCollapsed] = useState(readTopBarCollapsed);
 
   const toggleTopBar = () => {
     setTopBarCollapsed((prev) => {
@@ -350,10 +352,7 @@ export function DashboardTopBar() {
     });
   };
 
-  const linkPassStatus = useMemo(
-    () => resolveLinkPassStatus(now.getTime(), tdrssPasses),
-    [now],
-  );
+  const linkPassStatus = PLACEHOLDER_LINK_PASS_STATUS;
 
   return (
     <div className="w-full shrink-0">
@@ -362,11 +361,11 @@ export function DashboardTopBar() {
         className={topBarCollapsed ? "hidden" : "block"}
         aria-hidden={topBarCollapsed}
       >
-        <header className="w-full">
-          <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-stretch md:gap-4">
+        <header className="flex w-full items-center justify-center">
+          <div className="flex w-full flex-col items-center gap-3 md:flex-row md:flex-wrap md:items-center md:justify-center md:gap-4">
             <div className="flex w-full flex-shrink-0 flex-row items-center justify-center gap-3 md:contents">
               <BrandedImageSlot
-                frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-square w-[min(22vw,7.5rem)] shrink-0`}
+                frameClass={`${LOGO_FRAME} aspect-square w-[min(22vw,7.5rem)] min-h-[min(22vw,7.5rem)]`}
                 src="/patch.png"
                 alt="Mission patch"
                 sizes="(max-width: 768px) 22vw, 120px"
@@ -374,7 +373,7 @@ export function DashboardTopBar() {
               />
 
               <BrandedImageSlot
-                frameClass={`${LOGO_FRAME} ${TILE_MY} aspect-[3/1] h-[min(11vw,60px)] shrink-0 self-center`}
+                frameClass={`${LOGO_FRAME} aspect-[3/1] w-[min(36vw,11rem)] min-h-[min(11vw,3.75rem)] md:w-[11rem] md:min-h-[3.75rem]`}
                 src="/logo.png"
                 alt="Company logo"
                 sizes="(max-width: 768px) 23vw, 180px"
@@ -388,7 +387,7 @@ export function DashboardTopBar() {
               timezoneSlots={timezoneSlots}
               setTimezoneSlots={setTimezoneSlots}
             />
-            <MetTile now={now} />
+            <MetTile now={archiveNowDate} />
             <LinkPassTile status={linkPassStatus} />
           </div>
         </header>

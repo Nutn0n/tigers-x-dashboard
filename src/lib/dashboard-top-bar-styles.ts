@@ -1,14 +1,13 @@
 /** Tailwind class strings for `DashboardTopBar` tiles and typography. */
 
 export const BOX =
-  "rounded-[10px] bg-[#000] text-[#eee] flex flex-col items-center justify-center text-center";
+  "rounded-[10px] bg-[#000] text-[#eee] flex h-auto flex-col items-center justify-center self-center text-center px-2 py-2";
 
-export const LOGO_FRAME = "rounded-[10px] bg-[#000] relative overflow-hidden";
-
-export const TILE_MY = "my-2";
+export const LOGO_FRAME =
+  "rounded-[10px] bg-[#000] relative shrink-0 self-center overflow-hidden";
 
 export function tile(extra = "") {
-  return [BOX, TILE_MY, extra].filter(Boolean).join(" ");
+  return [BOX, extra].filter(Boolean).join(" ");
 }
 
 export const LABEL =
@@ -22,16 +21,16 @@ export const DOT_LOS = "#EE220D";
 export const DOT_UNKNOWN = "#A9A9A9";
 
 export const GMT_TILE_EXTRA =
-  "w-[11.5rem] max-w-[11.5rem] shrink-0 px-2 max-md:w-full max-md:max-w-none md:w-[12rem] md:max-w-[12rem]";
+  "w-[11.5rem] max-w-[11.5rem] shrink-0 max-md:w-full max-md:max-w-none md:w-[12rem] md:max-w-[12rem]";
 
 export const TZ_TILE_EXTRA =
-  "min-w-0 w-full max-md:flex-none px-2 sm:px-3 md:w-auto md:flex-1 md:min-w-[22rem]";
+  "min-w-0 w-full max-md:flex-none sm:px-3 md:w-auto md:flex-1 md:min-w-[22rem]";
 
 export const MET_TILE_EXTRA =
-  "min-w-[9rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-0";
+  "min-w-[9rem] w-full max-md:flex-none md:w-auto md:flex-1 md:min-w-0";
 
 export const AOS_LOS_TILE_EXTRA =
-  "min-w-[20rem] w-full max-md:flex-none px-3 md:w-auto md:flex-1 md:min-w-[18rem]";
+  "min-w-[20rem] w-full max-md:flex-none md:w-auto md:flex-1 md:min-w-[18rem]";
 
 export const LINK_PASS_BAND_ROW_CLASS =
   "flex w-full flex-col items-center gap-1.5 first:mt-0";

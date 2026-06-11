@@ -8,10 +8,7 @@ function pad3(n: number) {
   return String(n).padStart(3, "0");
 }
 
-/**
- * Non-negative duration as `hh:mm:ss` (hours may exceed 23; hours use at least
- * two digits when under 100).
- */
+/** Non-negative duration as `hh:mm:ss` (hours may exceed 23). */
 export function formatHhMmSsFromDurationMs(durationMs: number) {
   let sec = Math.floor(Math.max(0, durationMs) / 1000);
   const h = Math.floor(sec / 3600);
@@ -65,16 +62,6 @@ export function formatMissionElapsedTime(now: Date, epochUtcMs: number) {
   const diffSeconds = Math.floor((now.getTime() - epochUtcMs) / 1000);
   const sign = diffSeconds < 0 ? "-" : "+";
   return `${sign}${formatDddHhMmSs(Math.abs(diffSeconds))}`;
-}
-
-export function formatTimeZoneClock(now: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(now);
 }
 
 /** Current UTC calendar date as `dd/mm/yyyy`. */

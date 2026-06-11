@@ -14,7 +14,7 @@ export const DASHBOARD_TOP_GRID_CELL = "min-h-0 min-w-0";
 
 /** Three equal columns: Microfludic | Activity Monitor | Telemetry. */
 export const DASHBOARD_QUARTER_OUTER =
-  "mt-6 grid min-h-0 min-w-0 shrink-0 grid-cols-1 gap-4 md:mt-8 md:grid-cols-3 md:gap-6";
+  "mt-6 grid min-h-0 min-w-0 shrink-0 grid-cols-1 items-start gap-4 md:mt-8 md:grid-cols-3 md:gap-6";
 
 export const DASHBOARD_QUARTER_CELL =
-  "flex h-full min-h-0 min-w-0 flex-col overflow-hidden";
+  "flex min-h-0 min-w-0 flex-col overflow-hidden";

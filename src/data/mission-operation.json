@@ -188,6 +188,14 @@
       "start": "2026-06-05T10:00:00.000Z",
       "end": "2026-06-05T10:00:00.000Z",
       "description": "The Conclusion of the TIGERS-X Experiment"
+    },
+    {
+      "id": "spx-34-undock",
+      "name": "SpX-34 Undock",
+      "type": "iss-event",
+      "start": "2026-06-16T16:04:00.000Z",
+      "end": "2026-06-16T16:04:00.000Z",
+      "description": "16 June 2026, 11:04 PM GMT+7 (23:04). Dragon undock from the International Space Station, returning the TIGERS-X experiment cube to Earth."
     }
   ]
 }

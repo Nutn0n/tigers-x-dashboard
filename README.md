@@ -1,110 +1,26 @@
-# TIGERS-X Mission Operations Dashboard
+# TIGERS-X Mission Archive
 
 ![mission-patch](public/patch.png)
 
-This is a web-based dashboard designed to display telemetry, telecommands, and status updates to support mission operations for the TIGERS-X payload in the ICE Cubes Facility on the Columbus Module aboard the International Space Station.
-
-**Deployed at:** https://dashboard.tigers-x.ishalab.space
+Static archive dashboard for the TIGERS-X payload in the ICE Cubes Facility on the Columbus Module aboard the International Space Station. Mission elapsed time is frozen at experiment cube deactivation (`2026-06-05T07:50:00.000Z`); wall clocks remain live.
 
 ## Features
 
-1. Display operation timeline alongside ISS mission operations  
-2. Display Mission Time, Ground Station Time, and Local Time  
-3. Display payload status and telemetry in real time  
-4. Display payload telecommand uplinks to the station in real time  
+1. Mission operation timeline with TDRSS S/KU link pass rows
+2. Live GMT and timezone clocks; frozen mission elapsed time
+3. Activity monitor with archived mission schedule text
+4. Static payload telemetry and experiment diagram panels
+5. `/countdown` page showing permanent deactivation state
 
-## Objective
+## Data sources
 
-The goal of this dashboard is to support mission operations in coordination with ESA, the ICE Cubes YAMS system, and mission planning software.
+Bundled JSON only — no live APIs or external fetches:
 
-## User Manual
+1. `src/data/mission-operation.json` — mission epoch, timeline events, activity descriptions
+2. `src/data/tdrss.json` — S-band and Ku-band link pass windows (timeline display)
+3. `src/data/telemetry-snapshot.json` — final payload telemetry at deactivation
 
-The website utilizes data from three sources:
-
-1. `mission-operation.json` for station and mission operation planning 
-2. Public API for telemetry and telecommand status  
-3. International Space Station public API  
-
-## `timeline.json` Format Example
-
-```json
-[
-  {
-  "mission": {
-    "id": "tigers-x",
-    "name": "Tigers-X",
-    "epoch": "2026-04-20T20:20:20.000Z"
-  },
-  "events": [
-    {
-      "id": "example-1",
-      "name": "Day 1 Operations",
-      "type": "operation",
-      "start": "2026-04-27T00:00:00.000Z",
-      "end": "2026-04-28T00:00:00.000Z"
-    },
-    {
-      "id": "example-2",
-      "name": "Daily Planning Conference",
-      "type": "iss-event",
-      "start": "2026-04-27T06:15:00.000Z",
-      "end": "2026-04-27T06:45:00.000Z"
-    },
-    {
-      "id": "example-3",
-      "name": "COL/MPCC Coordination Window",
-      "type": "col-mpcc",
-      "start": "2026-04-27T07:00:00.000Z",
-      "end": "2026-04-27T07:45:00.000Z"
-    },
-    {
-      "id": "example-4",
-      "name": "Channel 1 Operation",
-      "type": "chanel-1",
-      "start": "2026-04-27T10:10:00.000Z",
-      "end": "2026-04-27T10:42:43.500Z"
-    },
-    {
-      "id": "example-5",
-      "name": "Channel 2 Observation",
-      "type": "chanel-2",
-      "start": "2026-04-27T11:15:27.000Z",
-      "end": "2026-04-27T12:15:27.000Z"
-    },
-    {
-      "id": "example-6",
-      "name": "Channel 3 Sequence",
-      "type": "chanel-3",
-      "start": "2026-04-27T12:30:00.000Z",
-      "end": "2026-04-27T13:00:00.000Z"
-    }
-  ]
-}
-]
-```
-
-## Field Description
-
-- id: Unique identifier for each event  
-- name: Event or operation name  
-- type: Event type (e.g., iss-event, operation, col-mpcc)  
-- start: Start time in ISO 8601 format (UTC)  
-- end: End time in ISO 8601 format (UTC)  
-
-## Build And Run
-
-### Telemetry API (live payload data)
-
-The dashboard calls `https://telemetry.ishalab.space` directly from the browser using a public read token (`NEXT_PUBLIC_TELEMETRY_API_TOKEN` in `.env.example`). REST requests send `Authorization: Bearer …`; the WebSocket uses `?token=…` because browsers cannot set WS auth headers.
-
-```bash
-cp .env.example .env.local
-# Optional: override NEXT_PUBLIC_TELEMETRY_API_TOKEN or NEXT_PUBLIC_TELEMETRY_API_BASE_URL
-```
-
-Legacy same-origin proxies remain at `/api/telemetry/*` if you set server-only `TELEMETRY_API_TOKEN` instead.
-
-### Run Locally
+## Build and run
 
 ```bash
 npm install
@@ -113,24 +29,15 @@ npm run dev
 
 Open http://localhost:3000 (or the port shown in the terminal).
 
-### Production Build
+### Static export
 
 ```bash
 npm run build
-npm start
+npm run serve
 ```
 
-Served on the configured port (default: 3000). Use a process manager or container orchestration for reliability.
+The build writes a fully static site to `out/`. Use `npm run serve` locally or deploy `out/` to any static host.
 
-## Deployment
+## TDRSS data maintenance
 
-### Vercel (Recommended)
-
-- Push project to GitHub/GitLab/Bitbucket  
-- Import project into Vercel  
-- Select Next.js preset  
-- Use default build command: npm run build  
-- Deploy  
-
-No additional configuration is required for basic usage.
-
+Scripts under `scripts/` merge updated TDRSS pass schedules into `src/data/tdrss.json`.

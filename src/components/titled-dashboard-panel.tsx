@@ -11,7 +11,7 @@ export type TitledDashboardPanelVariant = "gridCell" | "tallStrip";
 
 /** Section shell with no horizontal padding (title row keeps `px-10`). */
 const DASHBOARD_PANEL_SECTION_FLUSH_CLASS =
-  "box-border flex h-full min-h-0 w-full min-w-0 flex-1 flex-col items-center rounded-[10px] border-[1px] border-solid border-[#eeeeee] pt-1";
+  "box-border flex w-full min-w-0 flex-col items-center rounded-[10px] border-[1px] border-solid border-[#eeeeee] pt-1";
 
 type TitledDashboardPanelProps = {
   title: string;
@@ -25,8 +25,8 @@ type TitledDashboardPanelProps = {
 };
 
 const VARIANT_ROOT_CLASS: Record<TitledDashboardPanelVariant, string> = {
-  gridCell: "flex h-full min-h-0 flex-col items-center",
-  tallStrip: "flex h-full min-h-0 flex-1 flex-col items-center",
+  gridCell: "flex h-auto min-h-0 flex-col items-center",
+  tallStrip: "flex h-auto min-h-0 flex-col items-center",
 };
 
 export function TitledDashboardPanel({
@@ -62,8 +62,8 @@ export function TitledDashboardPanel({
           <div
             className={
               contentFlush
-                ? "mt-3 flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto px-0 pb-3"
-                : "mt-3 flex min-h-0 w-full min-w-0 flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto px-1 pb-3"
+                ? "mt-3 flex w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-auto px-0 pb-3"
+                : "mt-3 flex w-full min-w-0 flex-col justify-start overflow-x-hidden overflow-y-auto px-1 pb-3"
             }
           >
             {children}

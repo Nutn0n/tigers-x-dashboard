@@ -39,8 +39,9 @@ export function Microfludic() {
           <div className="flex w-full justify-center">
             <img
               src="/pump.svg"
-              alt="Pump diagram"
-              style={{ width: 250, height: "auto" }}
+            alt="Pump diagram"
+            loading="lazy"
+            style={{ width: 250, height: "auto" }}
             />
           </div>
           <p className={DASHBOARD_PANEL_SECTION_LABEL_CLASS}>Event & pump</p>

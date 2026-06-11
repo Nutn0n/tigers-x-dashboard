@@ -1,11 +1,8 @@
 type TelemetryStringValueBoxProps = {
-  /** Raw value shown inside the box (empty / whitespace → em dash). */
   value: string;
-  /** Field name for `aria-label`. */
   field: string;
 };
 
-/** White outline, transparent fill — for string / enum telemetry fields. */
 export function TelemetryStringValueBox({ value, field }: TelemetryStringValueBoxProps) {
   const display = value.trim() === "" ? "—" : value;
   return (

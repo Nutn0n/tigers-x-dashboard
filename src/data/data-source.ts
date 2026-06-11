@@ -1,6 +1,8 @@
 import missionOperationJson from "@/data/mission-operation.json";
 import tdrssJson from "@/data/tdrss.json";
+import telemetrySnapshotJson from "@/data/telemetry-snapshot.json";
 import type { TimelineEvent } from "@/lib/mission-timeline";
+import type { TelemetrySnapshot } from "@/lib/telemetry";
 
 export type TdrssPass = {
   band: "s" | "ku";
@@ -21,14 +23,4 @@ export const missionTimelineData = missionOperationJson as MissionTimelineData;
 
 export const tdrssPasses = tdrssJson as TdrssPass[];
 
-export const apiPaths = {
-  iss: "/api/iss",
-  telemetryHealth: "/api/telemetry/health",
-  telemetryLatest: "/api/telemetry/latest",
-  telemetryStream: "/api/telemetry/stream",
-} as const;
-
-export const externalDataSources = {
-  celestrakTle:
-    "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
-} as const;
+export const telemetrySnapshot = telemetrySnapshotJson as TelemetrySnapshot;

@@ -2,9 +2,9 @@ import { CountdownPage } from "@/components/countdown-page";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Payload Deactivation Countdown | TIGERS-X",
+  title: "Payload Deactivation | TIGERS-X",
   description:
-    "Live countdown to Experiment Cube Deactivation with UTC clock and ISS link pass status.",
+    "Archived payload deactivation page with UTC clock and mission status.",
 };
 
 export default function CountdownRoute() {

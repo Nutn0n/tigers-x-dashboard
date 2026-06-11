@@ -1,5 +1,6 @@
 import { DashboardQuarterGrid } from "@/components/dashboard-quarter-grid";
 import { MissionDataProvider } from "@/components/data-source-provider";
+import { MissionEndedNotice } from "@/components/mission-ended-notice";
 import { TelemetryProvider } from "@/components/telemetry-provider";
 import { DashboardTopBar } from "@/components/DashboardTopBar";
 import { Iss } from "@/components/iss";
@@ -15,6 +16,7 @@ export default function Home() {
   return (
     <MissionDataProvider>
       <TelemetryProvider>
+      <MissionEndedNotice />
       <div className={DASHBOARD_PAGE_SHELL}>
         <div className={DASHBOARD_CONTENT_MAX}>
           <DashboardTopBar />

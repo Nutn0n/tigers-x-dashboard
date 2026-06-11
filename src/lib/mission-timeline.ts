@@ -53,22 +53,6 @@ const HOURS_PAD_AFTER_LAST_EVENT = 8;
 
 export const MS_PER_HOUR = 3600 * 1000;
 
-/**
- * 1-based mission day from wall time: each full 24h after `epochMs` advances the
- * day; the instant at `epochMs` is day 1. Returns null before mission start.
- */
-export function missionDayNumberFromEpoch(
-  nowMs: number,
-  epochMs: number,
-): number | null {
-  if (!Number.isFinite(nowMs) || !Number.isFinite(epochMs) || epochMs <= 0) {
-    return null;
-  }
-  const diff = nowMs - epochMs;
-  if (diff < 0) return null;
-  return Math.floor(diff / (MS_PER_HOUR * 24)) + 1;
-}
-
 /** Chanel 1–3 bars: vertical gradient (stops match → solid #D54722). */
 const CHANEL_ORANGE = "#D54722";
 const CHANEL_ROW_VERTICAL_GRADIENT = `linear-gradient(180deg, ${CHANEL_ORANGE} 0%, ${CHANEL_ORANGE} 100%)`;
@@ -173,13 +157,6 @@ export function barFillBackgroundStyle(rowType: TimelineBarRowType): {
 
 export function isOutlineOnlyLane(_rowType: TimelineBarRowType): boolean {
   return false;
-}
-
-export function mergeEventsForTimelineRange(
-  mission: TimelineEvent[],
-  tdrss: TimelineEvent[],
-): TimelineEvent[] {
-  return [...mission, ...tdrss];
 }
 
 export function emptyEventsByRow(): Record<RowType, TimelineEvent[]> {
@@ -599,14 +576,6 @@ export function formatOffsetFromEpoch(epochMs: number, tMs: number) {
   const h = Math.floor(rem / 3600);
   const m = Math.floor((rem % 3600) / 60);
   return `${sign}${String(days).padStart(3, "0")}:${pad2(h)}:${pad2(m)}`;
-}
-
-export function nowLineLeftPx(
-  nowMs: number,
-  timelineStartMs: number,
-  pxPerMs: number,
-) {
-  return (nowMs - timelineStartMs) * pxPerMs;
 }
 
 export function timelineTrackWidthPx(opts: {

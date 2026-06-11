@@ -83,7 +83,12 @@ export function PumpStatusTable({
                   key={`${key}-value`}
                   className={`py-1 text-right ${colIndex === 0 ? "pr-2 sm:pr-4" : ""}`}
                 >
-                  <TelemetryBooleanChip field={key} value={snapshot[key]} trueLabel="Operating" falseLabel="Idle" />
+                  <TelemetryBooleanChip
+                    field={key}
+                    value={snapshot[key]}
+                    trueLabel="Operating"
+                    falseLabel="Idle"
+                  />
                 </td>,
               ])}
             </tr>

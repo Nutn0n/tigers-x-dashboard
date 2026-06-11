@@ -1,7 +1,6 @@
 "use client";
 
 import { ConfettiBurst } from "@/components/confetti-burst";
-import { tdrssPasses } from "@/data/data-source";
 import {
   DOT_AOS,
   DOT_LOS,
@@ -11,21 +10,12 @@ import {
   LINK_PASS_BAND_ROW_CLASS,
   LINK_PASS_LINKS_ROW_CLASS,
 } from "@/lib/dashboard-top-bar-styles";
-import {
-  formatUtcDateDdMmYyyy,
-  formatHhMmSsFromDurationMs,
-} from "@/lib/dashboard-time";
+import { formatUtcDateDdMmYyyy } from "@/lib/dashboard-time";
 import type { LinkPassEndpoint } from "@/lib/link-pass-status";
-import {
-  getCubeDeactivationLabel,
-  getCubeDeactivationTargetMs,
-} from "@/lib/countdown-target";
-import { resolveLinkPassStatus } from "@/lib/tdrss-link-pass";
+import { PLACEHOLDER_LINK_PASS_STATUS } from "@/lib/link-pass-status";
+import { getCubeDeactivationLabel } from "@/lib/countdown-target";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-
-const TARGET_MS = getCubeDeactivationTargetMs();
-const FINAL_COUNTDOWN_SEC = 10;
+import { useEffect, useState } from "react";
 
 function useEverySecond(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -110,40 +100,8 @@ function BandRow({
 
 export function CountdownPage() {
   const now = useEverySecond();
-  const nowMs = now.getTime();
-  const [forcedEnd, setForcedEnd] = useState(false);
-  const [confettiBurstKey, setConfettiBurstKey] = useState(0);
-  const wasDeactivatedRef = useRef(false);
-
-  const remainingMs = forcedEnd ? 0 : TARGET_MS - nowMs;
-  const remainingSec = Math.ceil(Math.max(0, remainingMs) / 1000);
-  const isFinalCountdown =
-    remainingMs > 0 && remainingMs <= FINAL_COUNTDOWN_SEC * 1000;
-  const isDeactivated = remainingMs <= 0;
-
-  useEffect(() => {
-    if (isDeactivated && !wasDeactivatedRef.current) {
-      setConfettiBurstKey((k) => k + 1);
-    }
-    wasDeactivatedRef.current = isDeactivated;
-  }, [isDeactivated]);
-
-  const triggerDeactivation = () => {
-    setForcedEnd(true);
-    setConfettiBurstKey((k) => k + 1);
-    wasDeactivatedRef.current = true;
-  };
-
-  const linkStatus = useMemo(
-    () => resolveLinkPassStatus(nowMs, tdrssPasses),
-    [nowMs],
-  );
-
-  const mainDisplay = isDeactivated
-    ? "DEACTIVATED"
-    : isFinalCountdown
-      ? `T-${remainingSec}`
-      : formatHhMmSsFromDurationMs(remainingMs);
+  const [confettiBurstKey, setConfettiBurstKey] = useState(1);
+  const linkStatus = PLACEHOLDER_LINK_PASS_STATUS;
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[#000] text-[#eee]">
@@ -177,37 +135,19 @@ export function CountdownPage() {
 
         <button
           type="button"
-          onClick={triggerDeactivation}
-          className={`mt-8 cursor-pointer border-0 bg-transparent p-0 tabular-nums leading-none transition-opacity hover:opacity-90 ${
-            isFinalCountdown
-              ? "animate-countdown-shake text-[clamp(5rem,22vw,14rem)] font-bold text-[#eab308]"
-              : isDeactivated
-                ? "text-[clamp(3rem,12vw,8rem)] font-bold text-[#22c55e]"
-                : "text-[clamp(3.5rem,16vw,10rem)] font-medium text-[#eee]"
-          }`}
+          onClick={() => setConfettiBurstKey((k) => k + 1)}
+          className="mt-8 cursor-pointer border-0 bg-transparent p-0 text-[clamp(3rem,12vw,8rem)] font-bold tabular-nums leading-none text-[#22c55e] transition-opacity hover:opacity-90"
           aria-live="polite"
           aria-atomic="true"
-          aria-label={
-            isDeactivated
-              ? "Payload deactivated. Click to celebrate again."
-              : "Countdown to payload deactivation. Click to skip to deactivation."
-          }
+          aria-label="Payload deactivated. Click to celebrate again."
         >
-          {mainDisplay}
+          DEACTIVATED
         </button>
 
-        {!isDeactivated && !isFinalCountdown && (
-          <p className="mt-4 text-xs uppercase tracking-wider text-[#eee]/50 sm:text-sm">
-            hh:mm:ss remaining
-          </p>
-        )}
-
-        {isDeactivated && (
-          <p className="mt-6 max-w-lg text-sm text-[#eee]/70 sm:text-base">
-            Experiment cube deactivation complete. The TIGERS-X payload has concluded
-            operations aboard the ISS.
-          </p>
-        )}
+        <p className="mt-6 max-w-lg text-sm text-[#eee]/70 sm:text-base">
+          Experiment cube deactivation complete. The TIGERS-X payload has concluded
+          operations aboard the ISS.
+        </p>
       </main>
 
       <footer className="border-t border-solid border-[#eee]/10 px-4 py-4 text-center">

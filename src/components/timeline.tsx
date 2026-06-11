@@ -20,7 +20,6 @@ import {
   layoutEventsByRow,
   MS_PER_HOUR,
   MIN_TIMELINE_SPAN_HOURS,
-  nowLineLeftPx,
   pxPerMsFromZoom,
   ROW_CONFIG,
   TICK_STEP_HOURS,
@@ -34,9 +33,9 @@ import {
   TDRSS_TIMELINE_EVENTS,
   TDRSS_TIMELINE_LAYOUTS,
 } from "@/lib/tdrss-timeline";
-import { tdrssPasses } from "@/data/data-source";
-import { resolveLinkPassStatus } from "@/lib/tdrss-link-pass";
+import { PLACEHOLDER_LINK_PASS_STATUS } from "@/lib/link-pass-status";
 import { useMissionTimelineScroll } from "@/hooks/use-mission-timeline-scroll";
+import { archiveNowMs } from "@/lib/archive-time";
 
 const FILLED_BAR_CLASS =
   "absolute top-1 bottom-1 flex items-center overflow-hidden rounded border border-solid border-black/25 text-left shadow-[0_0_0_1px_rgba(0,0,0,0.35)]";
@@ -419,40 +418,23 @@ const TdrssTimelineRow = memo(function TdrssTimelineRow({
   );
 });
 
-function TimelineNowLine({
-  nowMs,
-  timelineStartMs,
-  pxPerMs,
-}: {
-  nowMs: number;
-  timelineStartMs: number;
-  pxPerMs: number;
-}) {
-  const left = nowLineLeftPx(nowMs, timelineStartMs, pxPerMs);
-  if (left < 0) return null;
-  return (
-    <div
-      className="pointer-events-none absolute inset-y-0 z-[8] w-px bg-white"
-      style={{ left }}
-      role="presentation"
-      aria-label="Current time"
-    />
-  );
-}
-
 export function Timeline() {
   const { timelineData } = useMissionDataSource();
   const epochMs = Date.parse(timelineData.mission.epoch);
   const events = timelineData.events as TimelineEvent[];
 
-  const [nowMs, setNowMs] = useState(() =>
-    Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0,
-  );
   const [eventTooltip, setEventTooltip] =
     useState<TimelineEventTooltipPayload | null>(null);
   const [viewport, setViewport] = useState({ scrollLeft: 0, width: 0 });
+  const [liveNowMs, setLiveNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setLiveNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const epochOk = Number.isFinite(epochMs) && epochMs > 0;
+  const nowMs = epochOk ? archiveNowMs : 0;
 
   const timelineStartMs = useMemo(
     () => (epochOk ? computeTimelineStartMs(epochMs, events) : epochMs),
@@ -469,16 +451,14 @@ export function Timeline() {
     return Math.max(missionSpan, tdrssSpan);
   }, [epochOk, timelineStartMs, events]);
 
-  const { eventsByRow, rowEventLayouts } = useMemo(() => {
+  const { rowEventLayouts } = useMemo(() => {
     if (!epochOk) {
       return {
-        eventsByRow: emptyEventsByRow(),
         rowEventLayouts: layoutEventsByRow(emptyEventsByRow()),
       };
     }
     const byRow = bucketEventsByRow(events);
     return {
-      eventsByRow: byRow,
       rowEventLayouts: layoutEventsByRow(byRow),
     };
   }, [epochOk, events]);
@@ -493,14 +473,9 @@ export function Timeline() {
     [],
   );
 
-  useEffect(() => {
-    setNowMs(Number.isFinite(epochMs) && epochMs > 0 ? epochMs : 0);
-  }, [epochMs]);
-
   const {
     scrollRef,
     zoom,
-    scrollToNow,
     dragPan,
     onPointerDown,
     onPointerMove,
@@ -567,17 +542,6 @@ export function Timeline() {
   }, [scrollRef, syncViewport, zoom]);
 
   useEffect(() => {
-    if (!epochOk) return;
-    const tick = () => setNowMs(Date.now());
-    const timeoutId = window.setTimeout(tick, 0);
-    const intervalId = window.setInterval(tick, 1000);
-    return () => {
-      window.clearTimeout(timeoutId);
-      window.clearInterval(intervalId);
-    };
-  }, [epochOk]);
-
-  useEffect(() => {
     if (!eventTooltip) return;
     const el = scrollRef.current;
     const hide = () => setEventTooltip(null);
@@ -602,13 +566,10 @@ export function Timeline() {
     [],
   );
 
-  const linkPassStatus = useMemo(
-    () => resolveLinkPassStatus(nowMs, tdrssPasses),
-    [nowMs],
-  );
+  const linkPassStatus = PLACEHOLDER_LINK_PASS_STATUS;
   const gmtElapsed = useMemo(
-    () => formatGmtYearElapsed(new Date(nowMs > 0 ? nowMs : Date.now())),
-    [nowMs],
+    () => formatGmtYearElapsed(new Date(liveNowMs)),
+    [liveNowMs],
   );
 
   const aosLosBar = (
@@ -694,17 +655,7 @@ export function Timeline() {
         className="flex min-h-0 flex-1 flex-col rounded-[10px] border-[1px] border-solid border-[#eeeeee] px-4 pt-1 sm:px-6 md:px-10"
         aria-label="Mission timeline"
       >
-        <div className="mb-1 flex items-center gap-3">
-          <button
-            type="button"
-            className="mt-[10px] shrink-0 rounded border border-solid border-[#eee]/30 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-[#eee]/80 transition hover:border-[#eee]/55 hover:text-[#eee] sm:text-xs"
-            onClick={scrollToNow}
-            disabled={!epochOk}
-          >
-            Jump to now
-          </button>
-          <h2 className={DASHBOARD_PANEL_TITLE_CLASS}>Mission timeline</h2>
-        </div>
+        <h2 className={`${DASHBOARD_PANEL_TITLE_CLASS} mb-1`}>Mission timeline</h2>
 
         {!epochOk ? (
           <p className="m-0 flex-1 text-center text-sm text-[#eee]/60">
@@ -859,12 +810,6 @@ export function Timeline() {
                       );
                     })}
                   </div>
-
-                  <TimelineNowLine
-                    nowMs={nowMs}
-                    timelineStartMs={timelineStartMs}
-                    pxPerMs={pxPerMs}
-                  />
                 </div>
               </div>
             </div>

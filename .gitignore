@@ -20,12 +20,13 @@
 # production
 /build
 
-# runtime ISS TLE cache (seed lives in src/data/iss-tle.json)
+# runtime caches
 /data/
 
 # misc
 .DS_Store
 *.pem
+.cursor/
 
 # debug
 npm-debug.log*
