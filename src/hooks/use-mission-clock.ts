@@ -15,15 +15,11 @@ export function useMissionClock(epochIso: string) {
   const epochMs = parseMissionEpochMs(epochIso);
   const epochOk = isMissionEpochValid(epochMs);
 
-  const [nowMs, setNowMs] = useState(() => (epochOk ? Date.now() : 0));
-
-  useEffect(() => {
-    setNowMs(epochOk ? Date.now() : 0);
-  }, [epochOk, epochMs]);
+  const [tickingNowMs, setTickingNowMs] = useState(() => (epochOk ? Date.now() : 0));
 
   useEffect(() => {
     if (!epochOk) return;
-    const tick = () => setNowMs(Date.now());
+    const tick = () => setTickingNowMs(Date.now());
     const timeoutId = window.setTimeout(tick, 0);
     const intervalId = window.setInterval(tick, 1000);
     return () => {
@@ -31,6 +27,8 @@ export function useMissionClock(epochIso: string) {
       window.clearInterval(intervalId);
     };
   }, [epochOk]);
+
+  const nowMs = epochOk ? tickingNowMs : 0;
 
   return { epochMs, epochOk, nowMs };
 }
